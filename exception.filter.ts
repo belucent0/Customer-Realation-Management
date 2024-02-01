@@ -27,10 +27,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
                 message: "인증 정보가 없습니다.",
                 result: false,
             };
-        }  else if (exception instanceof HttpException) {
+        } else if (exception instanceof HttpException) {
             const response = exception.getResponse() as ExceptionResponse;
 
-            errorResponse = {                
+            if (Array.isArray(response.message)) {
+                response.message = response.message[0];
+            }
+
+            errorResponse = {
                 timestamp: dayjs().format("YYYY-MM-DD HH:mm:ss"),
                 path: request.url,
                 statusCode: response.statusCode,
