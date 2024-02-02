@@ -7,21 +7,33 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Group {
-  id        Int      @id @default(autoincrement())
-  loginId   String   @unique
-  password  String
-  groupName String   @unique
-  email     String   @unique
-  phone     String   @unique
-  createdAt DateTime @default(now())
-}
-
 model User {
   id        Int      @id @default(autoincrement())
   loginId   String   @unique
   password  String
   userName  String   @unique
   email     String   @unique
+  phone     String   @unique
   createdAt DateTime @default(now())
+  Member    Member[]
+}
+
+model Group {
+  id        Int      @id @default(autoincrement())
+  groupName String   @unique
+  createdAt DateTime @default(now())
+  Member    Member[]
+}
+
+model Member {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  groupId   Int
+  status    String   @default("member")
+  createdAt DateTime @default(now())
+
+  User  User  @relation(fields: [userId], references: [id])
+  Group Group @relation(fields: [groupId], references: [id])
+
+  @@unique([userId, groupId])
 }

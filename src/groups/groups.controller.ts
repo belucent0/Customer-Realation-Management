@@ -9,7 +9,8 @@ export class GroupsController {
 
     @Post()
     create(@Body(new ValidationPipe()) createGroupDto: CreateGroupDto) {
-        return this.groupsService.create(createGroupDto);
+        const userId = 1;
+        return this.groupsService.create(userId, createGroupDto);
     }
 
     @Get()

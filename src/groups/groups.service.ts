@@ -8,55 +8,42 @@ import { Group } from "./entities/group.entity";
 export class GroupsService {
     constructor(private readonly prisma: PrismaService) {}
 
-    async create(createGroupDto: CreateGroupDto): Promise<Group> {
+    async create(userId: number, createGroupDto: CreateGroupDto) {
         try {
-            // createGroupDto로 동일한 logindId, GroupName, email, phone이 존재하는지 확인
             const isExist = await this.prisma.group.findMany({
                 where: {
-                    OR: [
-                        { loginId: createGroupDto.loginId },
-                        { groupName: createGroupDto.groupName },
-                        { email: createGroupDto.email },
-                        { phone: createGroupDto.phone },
-                    ],
+                    OR: [{ groupName: createGroupDto.groupName }],
                 },
             });
 
-            // 만약 동일한 값이 존재한다면, isExist의 요소들을 error에 push
             const error = [];
             isExist.forEach(element => {
-                if (element.loginId === createGroupDto.loginId) {
-                    error.push("아이디");
-                }
                 if (element.groupName === createGroupDto.groupName) {
                     error.push("그룹명");
-                }
-                if (element.email === createGroupDto.email) {
-                    error.push("이메일");
-                }
-                if (element.phone === createGroupDto.phone) {
-                    error.push("휴대전화");
                 }
             });
 
             if (error.length > 0) {
-                throw new BadRequestException(`${error.join(", ")}에서 이미 사용중인 값이 존재합니다. 값을 변경해주세요.`);
+                throw new BadRequestException(`${error.join(", ")}의 값을 변경해주세요. 이미 동일한 값을 사용 중입니다.`);
             }
 
             if (isExist.length === 0) {
                 const newGroup = await this.prisma.group.create({
                     data: {
-                        loginId: createGroupDto.loginId,
-                        password: createGroupDto.password,
                         groupName: createGroupDto.groupName,
-                        email: createGroupDto.email,
-                        phone: createGroupDto.phone,
+                        Member: {
+                            create: {
+                                userId: userId,
+                                status: "owner",
+                            },
+                        },
                     },
                 });
 
                 return newGroup;
             }
         } catch (error) {
+            console.error(error);
             if (error instanceof BadRequestException) {
                 throw error;
             }
@@ -99,11 +86,7 @@ export class GroupsService {
             const updatedGroup = await this.prisma.group.update({
                 where: { id: id },
                 data: {
-                    loginId: updateGroupDto.loginId,
-                    password: updateGroupDto.password,
                     groupName: updateGroupDto.groupName,
-                    email: updateGroupDto.email,
-                    phone: updateGroupDto.phone,
                 },
             });
 
