@@ -1,7 +1,9 @@
-import { NestFactory } from "@nestjs/core";
+import { NestFactory, Reflector } from "@nestjs/core";
 import { AppModule } from "./app.module";
-import { HttpExceptionFilter } from "exception.filter";
+import { HttpExceptionFilter } from "utils/exception.filter";
 import { ConfigService } from "@nestjs/config";
+import { LoggingInterceptor } from "utils/logging.interceptor";
+import { ResponseTransformInterceptor } from "utils/response-transform.interceptor";
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
@@ -10,6 +12,8 @@ async function bootstrap() {
 
     app.setGlobalPrefix("api");
     app.useGlobalFilters(new HttpExceptionFilter());
+    app.useGlobalInterceptors(new LoggingInterceptor());
+    app.useGlobalInterceptors(new ResponseTransformInterceptor(new Reflector()));
     await app.listen(PORT);
 }
 bootstrap();

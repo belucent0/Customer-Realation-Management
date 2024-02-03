@@ -3,11 +3,11 @@ import { Response } from "express";
 import * as dayjs from "dayjs";
 
 export interface ExceptionResponse {
-    timestamp: string;
-    path: string;
     statusCode: number;
     message: string;
-    result: boolean;
+    data: boolean;
+    timestamp: string;
+    path: string;
 }
 
 @Catch()
@@ -21,11 +21,11 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
         if (exception instanceof UnauthorizedException) {
             errorResponse = {
-                timestamp: dayjs().format("YYYY-MM-DD HH:mm:ss"),
-                path: request.url,
                 statusCode: exception.getStatus(),
                 message: "인증 정보가 없습니다.",
-                result: false,
+                data: false,
+                timestamp: dayjs().format("YYYY-MM-DD HH:mm:ss"),
+                path: request.url,
             };
         } else if (exception instanceof HttpException) {
             const response = exception.getResponse() as ExceptionResponse;
@@ -35,11 +35,11 @@ export class HttpExceptionFilter implements ExceptionFilter {
             }
 
             errorResponse = {
-                timestamp: dayjs().format("YYYY-MM-DD HH:mm:ss"),
-                path: request.url,
                 statusCode: response.statusCode,
                 message: response.message,
-                result: false,
+                data: false,
+                timestamp: dayjs().format("YYYY-MM-DD HH:mm:ss"),
+                path: request.url,
             };
         } else if (exception instanceof Error) {
             errorResponse = {
@@ -47,15 +47,15 @@ export class HttpExceptionFilter implements ExceptionFilter {
                 path: request.url,
                 statusCode: 500,
                 message: exception.message,
-                result: false,
+                data: false,
             };
         } else {
             errorResponse = {
-                timestamp: dayjs().format("YYYY-MM-DD HH:mm:ss"),
-                path: request.url,
                 statusCode: 500,
                 message: "실행중 서버 에러 발생, 관리자에게 문의하세요.",
-                result: false,
+                data: false,
+                timestamp: dayjs().format("YYYY-MM-DD HH:mm:ss"),
+                path: request.url,
             };
         }
 
