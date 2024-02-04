@@ -1,1 +1,5 @@
-export class Group {}
+export class Group {
+    id: number;
+    groupName: string;
+    createdAt: Date;
+}
