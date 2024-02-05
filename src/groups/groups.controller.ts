@@ -11,12 +11,14 @@ import {
     HttpCode,
     HttpStatus,
     UseInterceptors,
+    UseGuards,
 } from "@nestjs/common";
 import { GroupsService } from "./groups.service";
 import { CreateGroupDto } from "./dto/create-group.dto";
 import { UpdateGroupDto } from "./dto/update-group.dto";
 import { Group } from "@prisma/client";
 import { ResMessage } from "utils/response-message.decorator";
+import { AuthGuard } from "@nestjs/passport";
 
 @Controller("groups")
 export class GroupsController {
@@ -24,6 +26,7 @@ export class GroupsController {
 
     //그룹 생성
     @Post()
+    @UseGuards(AuthGuard())
     @HttpCode(HttpStatus.CREATED)
     @ResMessage("그룹 생성 성공!")
     async create(@Body(new ValidationPipe()) createGroupDto: CreateGroupDto): Promise<Group> {
@@ -33,6 +36,7 @@ export class GroupsController {
 
     //그룹명 중복확인
     @Post("check")
+    @UseGuards(AuthGuard())
     @HttpCode(HttpStatus.OK)
     @ResMessage("사용 가능한 그룹명입니다.")
     async checkGroupName(@Body("groupName") groupName: string) {
@@ -41,6 +45,7 @@ export class GroupsController {
 
     //그룹 목록 조회
     @Get()
+    @UseGuards(AuthGuard())
     @HttpCode(HttpStatus.OK)
     @ResMessage("그룹 목록 조회 성공!")
     findAll() {
@@ -49,6 +54,7 @@ export class GroupsController {
 
     //그룹 상세 조회
     @Get(":id")
+    @UseGuards(AuthGuard())
     @HttpCode(HttpStatus.OK)
     @ResMessage("그룹 상세 조회 성공!")
     findOne(@Param("id", ParseIntPipe) id: number) {

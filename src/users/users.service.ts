@@ -4,22 +4,21 @@ import { UpdateUserDto } from "./dto/update-user.dto";
 import { PrismaService } from "src/prisma.service";
 import { User } from "@prisma/client";
 import * as bcrypt from "bcrypt";
-import { JwtService } from "@nestjs/jwt";
+import { AuthService } from "src/auth/auth.service";
 
 @Injectable()
 export class UsersService {
     constructor(
-        private readonly prisma: PrismaService,
-        private jwtService: JwtService,
+        private prisma: PrismaService,
+        private authService: AuthService,
     ) {}
 
-    async create(createUserDto: CreateUserDto): Promise<User> {
+    async createUser(createUserDto: CreateUserDto): Promise<User> {
         try {
             const isExist = await this.prisma.user.findMany({
                 where: {
                     OR: [
                         { loginId: createUserDto.loginId },
-                        { password: createUserDto.password },
                         { userName: createUserDto.userName },
                         { email: createUserDto.email },
                         { phone: createUserDto.phone },
@@ -49,10 +48,13 @@ export class UsersService {
             }
 
             if (isExist.length === 0) {
+                const salt = bcrypt.genSaltSync(10);
+                const hashedPassword = await bcrypt.hash(createUserDto.password, salt);
+
                 const newUser = await this.prisma.user.create({
                     data: {
                         loginId: createUserDto.loginId,
-                        password: createUserDto.password,
+                        password: hashedPassword,
                         userName: createUserDto.userName,
                         email: createUserDto.email,
                         phone: createUserDto.phone,
@@ -67,43 +69,6 @@ export class UsersService {
                 throw error;
             }
             throw new InternalServerErrorException("회원 등록에 실패했습니다.");
-        }
-    }
-
-    //jwt를 이용한 로그인, bycrypt를 이용한 비밀번호 암호화
-    async signin(createUserDto: CreateUserDto): Promise<User> {
-        try {
-            const user = await this.prisma.user.findUnique({
-                where: {
-                    loginId: createUserDto.loginId,
-                },
-            });
-
-            if (!user) {
-                throw new BadRequestException("아이디를 확인해주세요.");
-            }
-
-            if (user.password !== createUserDto.password) {
-                throw new BadRequestException("비밀번호를 확인해주세요.");
-            }
-
-            const isPasswordMatch = await bcrypt.compare(createUserDto.password, user.password);
-
-            if (!isPasswordMatch) {
-                throw new BadRequestException("비밀번호를 확인해주세요.");
-            }
-
-            const accessPayload = { loginId: user.loginId, sub: user.loginId };
-            const accessToken = await this.jwtService.sign(accessPayload);
-
-            const userWithToken = { ...user, accessToken };
-            return userWithToken;
-        } catch (error) {
-            console.error(error);
-            if (error instanceof BadRequestException) {
-                throw error;
-            }
-            throw new InternalServerErrorException("로그인에 실패했습니다.");
         }
     }
 

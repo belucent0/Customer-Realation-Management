@@ -8,14 +8,15 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  loginId   String   @unique
-  password  String
-  userName  String   @unique
-  email     String   @unique
-  phone     String   @unique
-  createdAt DateTime @default(now())
-  Member    Member[]
+  id           Int      @id @default(autoincrement())
+  loginId      String   @unique
+  password     String
+  userName     String   @unique
+  email        String   @unique
+  phone        String   @unique
+  createdAt    DateTime @default(now())
+  refreshToken String?
+  Member       Member[]
 }
 
 model Group {
@@ -31,9 +32,9 @@ model Member {
   groupId   Int
   status    String   @default("member")
   createdAt DateTime @default(now())
-
-  User  User  @relation(fields: [userId], references: [id])
-  Group Group @relation(fields: [groupId], references: [id])
+  Group     Group    @relation(fields: [groupId], references: [id])
+  User      User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, groupId])
+  @@index([groupId], map: "Member_groupId_fkey")
 }
