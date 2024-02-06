@@ -4,14 +4,10 @@ import { UpdateUserDto } from "./dto/update-user.dto";
 import { PrismaService } from "src/prisma.service";
 import { User } from "@prisma/client";
 import * as bcrypt from "bcrypt";
-import { AuthService } from "src/auth/auth.service";
 
 @Injectable()
 export class UsersService {
-    constructor(
-        private prisma: PrismaService,
-        private authService: AuthService,
-    ) {}
+    constructor(private prisma: PrismaService) {}
 
     async createUser(createUserDto: CreateUserDto): Promise<User> {
         try {
@@ -60,6 +56,8 @@ export class UsersService {
                         phone: createUserDto.phone,
                     },
                 });
+
+                newUser.password = undefined;
 
                 return newUser;
             }

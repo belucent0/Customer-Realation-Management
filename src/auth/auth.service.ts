@@ -24,65 +24,6 @@ export class AuthService extends PassportStrategy(Strategy) {
         });
     }
 
-    async createUser(createUserDto: CreateUserDto): Promise<User> {
-        try {
-            const isExist = await this.prisma.user.findMany({
-                where: {
-                    OR: [
-                        { loginId: createUserDto.loginId },
-                        { userName: createUserDto.userName },
-                        { email: createUserDto.email },
-                        { phone: createUserDto.phone },
-                    ],
-                },
-            });
-
-            // 만약 동일한 값이 존재한다면, isExist의 요소들을 error에 push
-            const error = [];
-            isExist.forEach(element => {
-                if (element.loginId === createUserDto.loginId) {
-                    error.push("아이디");
-                }
-                if (element.userName === createUserDto.userName) {
-                    error.push("이름");
-                }
-                if (element.email === createUserDto.email) {
-                    error.push("이메일");
-                }
-                if (element.phone === createUserDto.phone) {
-                    error.push("휴대전화");
-                }
-            });
-
-            if (error.length > 0) {
-                throw new BadRequestException(`${error.join(", ")}의 값을 변경해주세요. 이미 동일한 값을 사용 중입니다.`);
-            }
-
-            if (isExist.length === 0) {
-                const salt = bcrypt.genSaltSync(10);
-                const hashedPassword = await bcrypt.hash(createUserDto.password, salt);
-
-                const newUser = await this.prisma.user.create({
-                    data: {
-                        loginId: createUserDto.loginId,
-                        password: hashedPassword,
-                        userName: createUserDto.userName,
-                        email: createUserDto.email,
-                        phone: createUserDto.phone,
-                    },
-                });
-
-                return newUser;
-            }
-        } catch (error) {
-            console.error(error);
-            if (error instanceof BadRequestException) {
-                throw error;
-            }
-            throw new InternalServerErrorException("회원 등록에 실패했습니다.");
-        }
-    }
-
     // 로그인
     async login(createUserDto: CreateUserDto): Promise<Omit<User, "password"> & { accessToken: string; refreshToken: string }> {
         try {
@@ -115,9 +56,17 @@ export class AuthService extends PassportStrategy(Strategy) {
                 expiresIn: this.configService.get<string>("refreshTokenExpiresIn"),
             });
 
-            await this.prisma.user.update({
-                where: { id: user.id },
-                data: { refreshToken },
+            await this.prisma.token.upsert({
+                where: { userId: user.id },
+                create: {
+                    token: refreshToken,
+                    tokenVer: refreshPayload.tokenVersion,
+                    userId: user.id,
+                },
+                update: {
+                    token: refreshToken,
+                    tokenVer: refreshPayload.tokenVersion,
+                },
             });
 
             const { password, ...result } = user;
@@ -136,8 +85,24 @@ export class AuthService extends PassportStrategy(Strategy) {
         }
     }
 
+    //로그아웃
+    async logout(userId: number): Promise<void> {
+        try {
+            // 토큰 버전항목에 있던 값을 삭제함
+            await this.prisma.token.update({
+                where: { userId },
+                data: { tokenVer: "" },
+            });
+
+            return;
+        } catch (error) {
+            console.error(error);
+            throw new InternalServerErrorException("로그아웃에 실패했습니다.");
+        }
+    }
+
     //액세스 토큰 발급
-    async generateAccessTokens(userId: number) {
+    async generateAccessTokens(userId: number): Promise<string> {
         const accessPayload = { userId };
         const accessToken = await this.jwtService.sign(accessPayload, {
             secret: this.configService.get<string>("jwtSecret"),
@@ -148,7 +113,7 @@ export class AuthService extends PassportStrategy(Strategy) {
     }
 
     //토큰 검증
-    async validate(payload: any) {
+    async validate(payload: any): Promise<User> {
         const user = await this.prisma.user.findUnique({
             where: { id: payload.userId },
         });
@@ -161,18 +126,24 @@ export class AuthService extends PassportStrategy(Strategy) {
     }
 
     //리프레시 토큰 검증
-    async validateRefreshToken(refreshToken: string) {
+    async validateRefreshToken(refreshToken: string): Promise<number> {
         try {
-            const payload = this.jwtService.verify(refreshToken, {
+            const { userId, tokenVersion } = this.jwtService.verify(refreshToken, {
                 secret: this.configService.get<string>("jwtSecret"),
             });
 
-            const user = await this.prisma.user.findUnique({
-                where: { id: payload.userId },
+            const tokenInfo = await this.prisma.token.findUnique({
+                where: { userId },
             });
 
-            if (!user || user.refreshToken !== refreshToken) {
-                throw new UnauthorizedException("토큰이 유효하지 않습니다. 다시 로그인해주세요.");
+            if (!tokenInfo || tokenInfo.tokenVer !== tokenVersion) {
+                throw new UnauthorizedException("토큰이 유효하지 않습니다.");
+            }
+
+            const user = await this.prisma.user.findUnique({ where: { id: userId } });
+
+            if (!user) {
+                throw new UnauthorizedException("사용자를 찾을 수 없습니다.");
             }
 
             return user.id;
