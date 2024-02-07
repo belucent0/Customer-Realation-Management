@@ -1,8 +1,8 @@
 import { Body, Controller, HttpCode, HttpStatus, Post, Req, UnauthorizedException, UseGuards } from "@nestjs/common";
 import { AuthService } from "./auth.service";
-import { CreateUserDto } from "src/users/dto/create-user.dto";
 import { AuthGuard } from "@nestjs/passport";
 import { ResMessage } from "utils/response-message.decorator";
+import { LoginDto } from "./dto/create-auth.dto";
 
 @Controller("auth")
 export class AuthController {
@@ -12,8 +12,8 @@ export class AuthController {
     @Post("login")
     @HttpCode(HttpStatus.OK)
     @ResMessage("로그인 성공!")
-    login(@Body() createUserDto: CreateUserDto) {
-        return this.authService.login(createUserDto);
+    login(@Req() req, @Body() loginDto: LoginDto) {
+        return this.authService.login(loginDto);
     }
 
     //로그아웃

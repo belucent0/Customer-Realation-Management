@@ -10,7 +10,6 @@ import {
     ValidationPipe,
     HttpCode,
     HttpStatus,
-    UseInterceptors,
     UseGuards,
 } from "@nestjs/common";
 import { GroupsService } from "./groups.service";
