@@ -1,8 +1,15 @@
-import { BadRequestException, Injectable, InternalServerErrorException, UnauthorizedException } from "@nestjs/common";
+import {
+    BadRequestException,
+    HttpException,
+    HttpStatus,
+    Injectable,
+    InternalServerErrorException,
+    UnauthorizedException,
+} from "@nestjs/common";
 import { Strategy, ExtractJwt } from "passport-jwt";
 import { ConfigService } from "@nestjs/config";
 import { PassportStrategy } from "@nestjs/passport";
-import { JwtService } from "@nestjs/jwt";
+import { JsonWebTokenError, JwtService } from "@nestjs/jwt";
 import { PrismaService } from "src/prisma.service";
 import { User } from "@prisma/client";
 import * as bcrypt from "bcrypt";
@@ -46,7 +53,7 @@ export class AuthService extends PassportStrategy(Strategy) {
             //로그인 토큰 생성
             const nowInKST = dayjs();
             const iatInKST = nowInKST.format();
-            const expInKST = nowInKST.add(await this.configService.get<number>("accessTokenExpiresIn"), "s").format();
+            const expInKST = nowInKST.add(parseInt(this.configService.get<string>("refreshTokenExpiresIn")), "s").format();
 
             const accessPayload = { userId: user.id };
             const accessToken = await this.jwtService.sign(accessPayload, {
@@ -54,25 +61,18 @@ export class AuthService extends PassportStrategy(Strategy) {
                 expiresIn: this.configService.get<string>("accessTokenExpiresIn"),
             });
 
-            const refreshPayload = { userId: user.id, iatInKST: iatInKST, expInKST };
+            const refreshPayload = { userId: user.id };
             const refreshToken = await this.jwtService.sign(refreshPayload, {
                 secret: this.configService.get<string>("jwtSecret"),
                 expiresIn: this.configService.get<string>("refreshTokenExpiresIn"),
             });
 
-            const abc1 = await this.jwtService.verify(accessToken, {
-                secret: this.configService.get<string>("jwtSecret"),
-            });
-            console.log(abc1, "액세스 토큰 검증 완료", refreshPayload);
-
-            // abc1.exp은 유닉스타임프이므로 이것을 dayjs로 변환하여 사용
-            console.log(dayjs(abc1.exp * 1000).format(), "액세스 토큰 검증 완료", dayjs().format());
-            const abc = await this.prisma.token.create({
+            await this.prisma.token.create({
                 data: {
                     userId: user.id,
                     token: refreshToken,
-                    issuedAt: refreshPayload.iatInKST,
-                    expiresAt: refreshPayload.expInKST,
+                    issuedAt: iatInKST,
+                    expiresAt: expInKST,
                     isRevoked: 0,
                 },
             });
@@ -104,7 +104,7 @@ export class AuthService extends PassportStrategy(Strategy) {
             });
 
             if (!token) {
-                throw new BadRequestException("로그아웃에 실패했습니다.");
+                throw new InternalServerErrorException("로그아웃에 실패했습니다.");
             }
 
             await this.prisma.token.update({
@@ -135,18 +135,14 @@ export class AuthService extends PassportStrategy(Strategy) {
 
     //토큰 검증
     async validate(payload: any): Promise<User> {
-        console.log(dayjs(payload.expInKST).isBefore(dayjs()), "토큰 검증 중");
-        console.log(dayjs(payload.expInKST).format(), "토큰 검증 중", dayjs().format());
+        console.log(payload, "토큰 검증 중");
         if (!payload.userId) {
             throw new UnauthorizedException("인증 정보가 없습니다. 다시 로그인해주세요.");
         }
 
-        if (!payload.iatInKST || !payload.expInKST) {
-            throw new UnauthorizedException("토큰이 유효하지 않습니다. 다시 로그인해주세요.");
-        }
-
-        if (dayjs(payload.expInKST).isBefore(dayjs())) {
-            throw new UnauthorizedException("토큰이 만료되었습니다. 재발급해주세요");
+        if (dayjs(payload.exp).isAfter(dayjs())) {
+            console.log(dayjs(payload.exp).isBefore(dayjs()));
+            throw new UnauthorizedException("토큰이 만료되었습니다. 다시 로그인해주세요.");
         }
 
         const user = await this.prisma.user.findUnique({
@@ -154,8 +150,6 @@ export class AuthService extends PassportStrategy(Strategy) {
                 id: payload.userId,
             },
         });
-
-        console.log(payload);
 
         if (!user) {
             throw new UnauthorizedException("사용자를 찾을 수 없습니다.");
@@ -167,6 +161,7 @@ export class AuthService extends PassportStrategy(Strategy) {
     //리프레시 토큰 검증
     async validateRefreshToken(refreshToken: string): Promise<number> {
         try {
+            console.log(refreshToken, "리프레시 토큰 검증 중");
             const { userId } = this.jwtService.verify(refreshToken, {
                 secret: this.configService.get<string>("jwtSecret"),
             });

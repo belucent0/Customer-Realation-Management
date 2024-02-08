@@ -22,7 +22,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
         if (exception instanceof UnauthorizedException) {
             errorResponse = {
                 statusCode: exception.getStatus(),
-                message: "인증 정보가 없습니다. 다시 로그인해주세요.",
+                message: exception.message,
                 data: false,
                 timestamp: dayjs().format("YYYY-MM-DD HH:mm:ss"),
                 path: request.url,
@@ -45,9 +45,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
             errorResponse = {
                 timestamp: dayjs().format("YYYY-MM-DD HH:mm:ss"),
                 path: request.url,
+                data: false,
                 statusCode: 500,
                 message: exception.message,
-                data: false,
             };
         } else {
             errorResponse = {
