@@ -23,11 +23,6 @@ export class AuthController {
     @ResMessage("로그아웃 성공!")
     async logout(@Req() req): Promise<false> {
         const userId = req.user.id;
-
-        if (!userId) {
-            throw new UnauthorizedException("토큰이 유효하지 않습니다. 다시 로그인해주세요.");
-        }
-
         await this.authService.logout(userId);
         return false;
     }
@@ -39,13 +34,7 @@ export class AuthController {
     @ResMessage("토큰 재발급 성공!")
     async refreshToken(@Req() req): Promise<string> {
         const refreshToken = req.headers["authorization"].split(" ")[1] as string;
-        const userId = await this.authService.validateRefreshToken(refreshToken);
-
-        if (!userId) {
-            throw new UnauthorizedException("토큰이 유효하지 않습니다. 다시 로그인해주세요.");
-        }
-
-        const newAccessToken = await this.authService.generateAccessTokens(userId);
+        const newAccessToken = await this.authService.generateAccessTokens(refreshToken);
         return newAccessToken;
     }
 }

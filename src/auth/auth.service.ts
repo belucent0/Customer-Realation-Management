@@ -24,9 +24,8 @@ export class AuthService extends PassportStrategy(Strategy) {
         private prisma: PrismaService,
     ) {
         super({
-            //클라이언트에서 보낸 토큰 검증
             jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-            ignoreExpiration: true,
+            ignoreExpiration: true, // 토큰 만료 검사를 수동 진행
             secretOrKey: configService.get<string>("jwtSecret"),
         });
     }
@@ -96,7 +95,7 @@ export class AuthService extends PassportStrategy(Strategy) {
     //로그아웃
     async logout(userId: number): Promise<void> {
         try {
-            const token = await this.prisma.token.findFirst({
+            const token = await this.prisma.token.findMany({
                 where: {
                     userId,
                     isRevoked: 0,
@@ -107,9 +106,9 @@ export class AuthService extends PassportStrategy(Strategy) {
                 throw new InternalServerErrorException("로그아웃에 실패했습니다.");
             }
 
-            await this.prisma.token.update({
+            await this.prisma.token.updateMany({
                 where: {
-                    id: token.id,
+                    userId,
                 },
                 data: {
                     isRevoked: 1,
@@ -121,71 +120,64 @@ export class AuthService extends PassportStrategy(Strategy) {
         }
     }
 
-    //액세스 토큰 재발급
-    async generateAccessTokens(userId: number): Promise<string> {
-        console.log(userId, "토큰 재발급 중");
-        const accessPayload = { userId };
-        const accessToken = await this.jwtService.sign(accessPayload, {
-            secret: this.configService.get<string>("jwtSecret"),
-            expiresIn: this.configService.get<string>("accessTokenExpiresIn"),
-        });
-
-        return accessToken;
-    }
-
     //토큰 검증
     async validate(payload: any): Promise<User> {
-        console.log(payload, "토큰 검증 중");
-        if (!payload.userId) {
-            throw new UnauthorizedException("인증 정보가 없습니다. 다시 로그인해주세요.");
-        }
-
-        if (dayjs(payload.exp).isAfter(dayjs())) {
-            console.log(dayjs(payload.exp).isBefore(dayjs()));
-            throw new UnauthorizedException("토큰이 만료되었습니다. 다시 로그인해주세요.");
-        }
-
-        const user = await this.prisma.user.findUnique({
-            where: {
-                id: payload.userId,
-            },
-        });
-
-        if (!user) {
-            throw new UnauthorizedException("사용자를 찾을 수 없습니다.");
-        }
-
-        return user;
-    }
-
-    //리프레시 토큰 검증
-    async validateRefreshToken(refreshToken: string): Promise<number> {
         try {
-            console.log(refreshToken, "리프레시 토큰 검증 중");
-            const { userId } = this.jwtService.verify(refreshToken, {
-                secret: this.configService.get<string>("jwtSecret"),
-            });
-
-            const tokenInfo = await this.prisma.token.findFirst({
-                where: {
-                    token: refreshToken,
-                },
-            });
-
-            if (!tokenInfo || tokenInfo.token !== refreshToken) {
-                throw new UnauthorizedException("토큰이 유효하지 않습니다.");
+            if (!payload.userId) {
+                throw new UnauthorizedException("인증 정보가 없습니다. 다시 로그인해주세요.");
             }
 
-            const user = await this.prisma.user.findUnique({ where: { id: userId } });
+            if (dayjs(payload.exp).isAfter(dayjs())) {
+                throw new UnauthorizedException("인증이 만료되었습니다. 다시 로그인해주세요.");
+            }
+
+            const user = await this.prisma.user.findUnique({
+                where: {
+                    id: payload.userId,
+                },
+            });
 
             if (!user) {
                 throw new UnauthorizedException("사용자를 찾을 수 없습니다.");
             }
 
-            return user.id;
+            return user;
         } catch (error) {
             console.error(error);
-            throw new UnauthorizedException("토큰이 유효하지 않습니다. 다시 로그인해주세요.");
+            if (error instanceof UnauthorizedException) {
+                throw error;
+            }
+            throw new InternalServerErrorException("사용자 인증에 실패하였습니다. 다시 로그인해주세요.");
+        }
+    }
+
+    //리프레시 토큰으로 액세스 토큰 재발급
+    async generateAccessTokens(refreshToken: string): Promise<string> {
+        try {
+            const tokenInfo = await this.prisma.token.findFirst({
+                where: {
+                    token: refreshToken,
+                    isRevoked: 0,
+                },
+            });
+
+            if (!tokenInfo || tokenInfo.token !== refreshToken) {
+                throw new UnauthorizedException("인증 정보가 만료되었습니다. 다시 로그인해주세요.");
+            }
+
+            const accessPayload = { userId: tokenInfo.userId };
+            const accessToken = await this.jwtService.sign(accessPayload, {
+                secret: this.configService.get<string>("jwtSecret"),
+                expiresIn: this.configService.get<string>("accessTokenExpiresIn"),
+            });
+
+            return accessToken;
+        } catch (error) {
+            console.error(error);
+            if (error instanceof UnauthorizedException) {
+                throw error;
+            }
+            throw new InternalServerErrorException("사용자 인증에 실패하였습니다. 다시 로그인해주세요.");
         }
     }
 }
