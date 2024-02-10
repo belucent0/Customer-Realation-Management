@@ -6,6 +6,7 @@ import { GroupsModule } from "./groups/groups.module";
 import { UsersModule } from "./users/users.module";
 import { MembersModule } from "./members/members.module";
 import { AuthModule } from './auth/auth.module';
+import { PaymentModule } from './payment/payment.module';
 import configuration from "./config/configuration";
 
 @Module({
@@ -19,6 +20,7 @@ import configuration from "./config/configuration";
         UsersModule,
         MembersModule,
         AuthModule,
+        PaymentModule,
     ],
     controllers: [AppController],
     providers: [AppService],

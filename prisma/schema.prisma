@@ -8,22 +8,24 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  loginId   String   @unique
+  id        Int       @id @default(autoincrement())
+  loginId   String    @unique
   password  String
-  userName  String   @unique
-  email     String   @unique
-  phone     String   @unique
-  createdAt DateTime @default(now())
+  userName  String    @unique
+  email     String    @unique
+  phone     String    @unique
+  createdAt DateTime  @default(now())
   Member    Member[]
   Token     Token[]
+  Payment   Payment[]
 }
 
 model Group {
-  id        Int      @id @default(autoincrement())
-  groupName String   @unique
-  createdAt DateTime @default(now())
+  id        Int       @id @default(autoincrement())
+  groupName String    @unique
+  createdAt DateTime  @default(now())
   Member    Member[]
+  Payment   Payment[]
 }
 
 model Member {
@@ -49,4 +51,17 @@ model Token {
   User      User     @relation(fields: [userId], references: [id], onDelete: Cascade, map: "Token_userId_fkey")
 
   @@index([userId], map: "Token_userId_fkey")
+}
+
+model Payment {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  groupId   Int
+  item      String
+  amount    Int
+  method    String
+  paymentAt DateTime @db.Timestamp(0)
+  createdAt DateTime @default(now())
+  User      User     @relation(fields: [userId], references: [id])
+  Group     Group    @relation(fields: [groupId], references: [id])
 }

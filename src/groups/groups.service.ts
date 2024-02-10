@@ -8,7 +8,7 @@ import { Group } from "./entities/group.entity";
 export class GroupsService {
     constructor(private readonly prisma: PrismaService) {}
 
-    async create(userId: number, createGroupDto: CreateGroupDto): Promise<Group> {
+    async createGroup(userId: number, createGroupDto: CreateGroupDto): Promise<Group> {
         try {
             const isExist = await this.prisma.group.findUnique({
                 where: { groupName: createGroupDto.groupName },
@@ -60,7 +60,7 @@ export class GroupsService {
         }
     }
 
-    async findAll(): Promise<Group[]> {
+    async findAllGroup(): Promise<Group[]> {
         try {
             const groups = await this.prisma.group.findMany();
 
