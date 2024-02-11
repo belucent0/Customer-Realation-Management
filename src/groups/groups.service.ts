@@ -1,5 +1,5 @@
 import { BadRequestException, HttpStatus, Injectable, InternalServerErrorException } from "@nestjs/common";
-import { CreateGroupDto } from "./dto/create-group.dto";
+import { CreateGroupDto, CreateMemberDto } from "./dto/create-group.dto";
 import { UpdateGroupDto } from "./dto/update-group.dto";
 import { PrismaService } from "src/prisma.service";
 import { Group } from "./entities/group.entity";
@@ -35,6 +35,7 @@ export class GroupsService {
                     data: {
                         userId: userId,
                         groupId: group.id,
+                        userName: user.userName,
                         phone: user.phone,
                         email: user.email,
                         address1: user.address1,
@@ -138,6 +139,56 @@ export class GroupsService {
                 throw error;
             }
             throw new InternalServerErrorException("그룹 삭제에 실패했습니다.");
+        }
+    }
+
+    //멤버 개별 추가
+    async addOneMember(groupId: number, createMemberDto: CreateMemberDto) {
+        try {
+            // 그룹에 이미 속해있는지 확인
+            const isExist = await this.prisma.member.findMany({
+                where: {
+                    OR: [
+                        { groupId, phone: createMemberDto.phone },
+                        { groupId, email: createMemberDto.email },
+                    ],
+                },
+            });
+
+            // 만약 동일한 값이 존재한다면, isExist의 요소들을 error에 push
+            const error = [];
+            isExist.forEach(element => {
+                if (element.phone === createMemberDto.phone) {
+                    error.push("휴대전화");
+                }
+                if (element.email === createMemberDto.email) {
+                    error.push("이메일");
+                }
+            });
+
+            if (error.length > 0) {
+                throw new BadRequestException(
+                    `${error.join(", ")}의 값을 확인해주세요. 이미 동일한 값을 가진 멤버가 존재합니다.`,
+                );
+            }
+            const newMember = await this.prisma.member.create({
+                data: {
+                    groupId: groupId,
+                    userName: createMemberDto.userName,
+                    phone: createMemberDto.phone,
+                    email: createMemberDto.email,
+                    address1: createMemberDto.address1,
+                    address2: createMemberDto.address2 || "",
+                    role: "member",
+                },
+            });
+
+            return newMember;
+        } catch (error) {
+            if (error instanceof BadRequestException) {
+                throw error;
+            }
+            throw new InternalServerErrorException("멤버 추가에 실패했습니다.");
         }
     }
 }

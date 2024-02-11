@@ -14,11 +14,12 @@ import {
     Req,
 } from "@nestjs/common";
 import { GroupsService } from "./groups.service";
-import { CreateGroupDto } from "./dto/create-group.dto";
+import { CreateGroupDto, CreateMemberDto } from "./dto/create-group.dto";
 import { UpdateGroupDto } from "./dto/update-group.dto";
 import { Group } from "@prisma/client";
 import { ResMessage } from "utils/response-message.decorator";
 import { AuthGuard } from "@nestjs/passport";
+import { create } from "domain";
 
 @Controller("groups")
 export class GroupsController {
@@ -53,21 +54,30 @@ export class GroupsController {
     }
 
     //그룹 상세 조회
-    @Get(":id")
+    @Get(":groupId")
     @UseGuards(AuthGuard())
     @HttpCode(HttpStatus.OK)
     @ResMessage("그룹 상세 조회 성공!")
-    findOne(@Param("id", ParseIntPipe) id: number) {
-        return this.groupsService.findOne(+id);
+    findOne(@Param("groupId", ParseIntPipe) groupId: number) {
+        return this.groupsService.findOne(+groupId);
     }
 
-    @Patch(":id")
-    update(@Param("id", ParseIntPipe) id: number, @Body() updateGroupDto: UpdateGroupDto) {
-        return this.groupsService.update(+id, updateGroupDto);
+    @Patch(":groupId")
+    update(@Param("groupId", ParseIntPipe) groupId: number, @Body() updateGroupDto: UpdateGroupDto) {
+        return this.groupsService.update(+groupId, updateGroupDto);
     }
 
-    @Delete(":id")
-    remove(@Param("id", ParseIntPipe) id: number) {
-        return this.groupsService.remove(+id);
+    @Delete(":groupId")
+    remove(@Param("groupId", ParseIntPipe) groupId: number) {
+        return this.groupsService.remove(+groupId);
+    }
+
+    // 멤버 개별 추가
+    @Post(":groupId/members")
+    @UseGuards(AuthGuard())
+    @HttpCode(HttpStatus.CREATED)
+    @ResMessage("멤버 추가 성공!")
+    addOneMember(@Param("groupId", ParseIntPipe) groupId: number, @Body() createMemberDto: CreateMemberDto) {
+        return this.groupsService.addOneMember(groupId, createMemberDto);
     }
 }

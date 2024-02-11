@@ -12,8 +12,8 @@ model User {
   loginId   String    @unique
   password  String
   userName  String
+  phone     String    @unique @db.VarChar(11)
   email     String    @unique
-  phone     String    @unique
   address1  String    @db.VarChar(200)
   address2  String?   @db.VarChar(200)
   createdAt DateTime  @default(now())
@@ -35,23 +35,26 @@ model Group {
 
 model Member {
   id        Int       @id @default(autoincrement())
-  userId    Int
+  userId    Int?
   groupId   Int
   joinedAt  DateTime  @default(now())
-  phone     String
+  userName  String    @db.VarChar(100)
+  phone     String    @db.VarChar(11)
+  email     String
   address1  String?   @db.VarChar(200)
   address2  String?   @db.VarChar(200)
-  email     String
   grade     String    @default("basic")
   createdAt DateTime  @default(now())
   role      String    @default("member")
   Meeting   Meeting[]
   Group     Group     @relation(fields: [groupId], references: [id])
-  User      User      @relation(fields: [userId], references: [id])
+  User      User?     @relation(fields: [userId], references: [id], onDelete: Restrict)
   Payment   Payment[]
   Renewal   Renewal[]
 
   @@unique([userId, groupId])
+  @@unique([groupId, phone])
+  @@unique([groupId, email])
   @@index([groupId], map: "Member_groupId_fkey")
 }
 
