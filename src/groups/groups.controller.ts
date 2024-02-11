@@ -12,6 +12,8 @@ import {
     HttpStatus,
     UseGuards,
     Req,
+    Query,
+    DefaultValuePipe,
 } from "@nestjs/common";
 import { GroupsService } from "./groups.service";
 import { CreateGroupDto, CreateMemberDto } from "./dto/create-group.dto";
@@ -72,12 +74,27 @@ export class GroupsController {
         return this.groupsService.remove(+groupId);
     }
 
-    // 멤버 개별 추가
+    // 멤버 개별 등록
     @Post(":groupId/members")
     @UseGuards(AuthGuard())
     @HttpCode(HttpStatus.CREATED)
-    @ResMessage("멤버 추가 성공!")
+    @ResMessage("멤버 등록 성공!")
     addOneMember(@Param("groupId", ParseIntPipe) groupId: number, @Body() createMemberDto: CreateMemberDto) {
         return this.groupsService.addOneMember(groupId, createMemberDto);
+    }
+
+    // 멤버 목록 조회
+    @Get(":groupId/members")
+    @UseGuards(AuthGuard())
+    @HttpCode(HttpStatus.OK)
+    @ResMessage("멤버 목록 조회 성공!")
+    findAllMembers(
+        @Req() req,
+        @Param("groupId", ParseIntPipe) groupId: number,
+        @Query("page", new DefaultValuePipe(0), ParseIntPipe) page: number,
+        @Query("take", new DefaultValuePipe(10), ParseIntPipe) take: number,
+    ) {
+        const userId = req.user.id;
+        return this.groupsService.findAllMembers(page, take, userId, groupId);
     }
 }

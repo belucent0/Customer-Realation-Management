@@ -11,6 +11,14 @@ export class GroupsService {
 
     async createGroup(userId: number, createGroupDto: CreateGroupDto) {
         try {
+            const isExistOwner = await this.prisma.member.findMany({
+                where: { userId, role: "owner" },
+            });
+
+            if (isExistOwner.length > 1) {
+                throw new BadRequestException("현재 플랜에서 2개 이상의 그룹을 생성할 수 없습니다.");
+            }
+
             const isExist = await this.prisma.group.findUnique({
                 where: { groupName: createGroupDto.groupName },
             });
@@ -119,6 +127,7 @@ export class GroupsService {
             console.log(updatedGroup, "1updatedGroup");
             return updatedGroup;
         } catch (error) {
+            console.error(error);
             throw new InternalServerErrorException("그룹 수정에 실패했습니다.");
         }
     }
@@ -135,6 +144,7 @@ export class GroupsService {
 
             return deletedGroup;
         } catch (error) {
+            console.error(error);
             if (error instanceof BadRequestException) {
                 throw error;
             }
@@ -142,10 +152,9 @@ export class GroupsService {
         }
     }
 
-    //멤버 개별 추가
+    //멤버 개별 등록
     async addOneMember(groupId: number, createMemberDto: CreateMemberDto) {
         try {
-            // 그룹에 이미 속해있는지 확인
             const isExist = await this.prisma.member.findMany({
                 where: {
                     OR: [
@@ -155,7 +164,6 @@ export class GroupsService {
                 },
             });
 
-            // 만약 동일한 값이 존재한다면, isExist의 요소들을 error에 push
             const error = [];
             isExist.forEach(element => {
                 if (element.phone === createMemberDto.phone) {
@@ -185,10 +193,50 @@ export class GroupsService {
 
             return newMember;
         } catch (error) {
+            console.error(error);
             if (error instanceof BadRequestException) {
                 throw error;
             }
-            throw new InternalServerErrorException("멤버 추가에 실패했습니다.");
+            throw new InternalServerErrorException("멤버 등록에 실패했습니다.");
+        }
+    }
+
+    //멤버 목록 조회
+    async findAllMembers(page: number, take: number, userId: number, groupId: number) {
+        try {
+            const isExist = await this.prisma.member.findFirst({
+                where: { groupId, userId },
+            });
+
+            if (!isExist) {
+                throw new BadRequestException("해당 그룹에 속해있지 않습니다.");
+            }
+
+            // role이 owner 혹은 admin인 멤버가 아니면 에러
+            if (isExist.role !== "owner" && isExist.role !== "admin") {
+                throw new BadRequestException("멤버 목록 조회 권한이 없습니다.");
+            }
+
+            const [members, total] = await Promise.all([
+                await this.prisma.member.findMany({
+                    where: { groupId },
+                    take,
+                    skip: (page - 1) * take,
+                    orderBy: [{ userName: "asc" }, { createdAt: "asc" }],
+                }),
+                this.prisma.member.count({
+                    where: { groupId },
+                }),
+            ]);
+            const lastPage = Math.ceil(total / take);
+
+            return { total, currentPage: page, lastPage, members };
+        } catch (error) {
+            console.error(error);
+            if (error instanceof BadRequestException) {
+                throw error;
+            }
+            throw new InternalServerErrorException("멤버 조회에 실패했습니다.");
         }
     }
 }

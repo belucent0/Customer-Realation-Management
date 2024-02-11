@@ -44,8 +44,8 @@ model Member {
   address1  String?   @db.VarChar(200)
   address2  String?   @db.VarChar(200)
   grade     String    @default("basic")
-  createdAt DateTime  @default(now())
   role      String    @default("member")
+  createdAt DateTime  @default(now())
   Meeting   Meeting[]
   Group     Group     @relation(fields: [groupId], references: [id])
   User      User?     @relation(fields: [userId], references: [id], onDelete: Restrict)
