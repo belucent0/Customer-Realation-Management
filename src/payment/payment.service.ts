@@ -8,18 +8,17 @@ import * as dayjs from "dayjs";
 export class PaymentService {
     constructor(private readonly prisma: PrismaService) {}
 
-    async createPayment(userId, createPaymentDto: CreatePaymentDto) {
+    async createPayment(userId: number, createPaymentDto: CreatePaymentDto) {
         try {
-            const date = dayjs().format();
-            console.log(date, userId);
             const newPayment = await this.prisma.payment.create({
                 data: {
                     userId: userId,
                     groupId: createPaymentDto.groupId,
+                    memberId: createPaymentDto.memberId,
                     item: createPaymentDto.item,
                     amount: createPaymentDto.amount,
                     method: createPaymentDto.method,
-                    paymentAt: date,
+                    paymentAt: dayjs(createPaymentDto.paymentAt).format().toString(),
                 },
             });
             console.log(newPayment, "newPayment");

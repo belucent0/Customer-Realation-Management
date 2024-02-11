@@ -14,7 +14,7 @@ import {
     Req,
 } from "@nestjs/common";
 import { GroupsService } from "./groups.service";
-import { CreateGroupDto, CreatePaymentDto } from "./dto/create-group.dto";
+import { CreateGroupDto } from "./dto/create-group.dto";
 import { UpdateGroupDto } from "./dto/update-group.dto";
 import { Group } from "@prisma/client";
 import { ResMessage } from "utils/response-message.decorator";

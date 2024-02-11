@@ -11,34 +11,108 @@ model User {
   id        Int       @id @default(autoincrement())
   loginId   String    @unique
   password  String
-  userName  String    @unique
+  userName  String
   email     String    @unique
   phone     String    @unique
+  address1  String    @db.VarChar(200)
+  address2  String?   @db.VarChar(200)
   createdAt DateTime  @default(now())
   Member    Member[]
-  Token     Token[]
   Payment   Payment[]
+  Token     Token[]
 }
 
 model Group {
-  id        Int       @id @default(autoincrement())
-  groupName String    @unique
-  createdAt DateTime  @default(now())
-  Member    Member[]
-  Payment   Payment[]
+  id          Int           @id @default(autoincrement())
+  groupName   String        @unique
+  createdAt   DateTime      @default(now())
+  Meeting     Meeting[]
+  Member      Member[]
+  Payment     Payment[]
+  Renewal     Renewal[]
+  Requirement Requirement[]
 }
 
 model Member {
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   userId    Int
   groupId   Int
-  status    String   @default("member")
-  createdAt DateTime @default(now())
-  Group     Group    @relation(fields: [groupId], references: [id])
-  User      User     @relation(fields: [userId], references: [id])
+  joinedAt  DateTime  @default(now())
+  phone     String
+  address1  String?   @db.VarChar(200)
+  address2  String?   @db.VarChar(200)
+  email     String
+  grade     String    @default("basic")
+  createdAt DateTime  @default(now())
+  role      String    @default("member")
+  Meeting   Meeting[]
+  Group     Group     @relation(fields: [groupId], references: [id])
+  User      User      @relation(fields: [userId], references: [id])
+  Payment   Payment[]
+  Renewal   Renewal[]
 
   @@unique([userId, groupId])
   @@index([groupId], map: "Member_groupId_fkey")
+}
+
+model Renewal {
+  id        Int      @id @default(autoincrement())
+  MemberId  Int
+  groupId   Int
+  nextDate  DateTime @db.Timestamp(0)
+  createdAt DateTime @default(now())
+  Member    Member   @relation(fields: [MemberId], references: [id])
+  Group     Group    @relation(fields: [groupId], references: [id])
+
+  @@index([MemberId], map: "Renewal_MemberId_fkey")
+  @@index([groupId], map: "Renewal_groupId_fkey")
+}
+
+model Meeting {
+  id        Int      @id @default(autoincrement())
+  memberId  Int
+  groupId   Int
+  category  String
+  reqOrder  String
+  title     String
+  content   String?
+  role      String
+  meetingAt DateTime @db.Timestamp(0)
+  createdAt DateTime @default(now())
+  Group     Group    @relation(fields: [groupId], references: [id])
+  Member    Member   @relation(fields: [memberId], references: [id])
+
+  @@index([groupId], map: "Meeting_groupId_fkey")
+  @@index([memberId], map: "Meeting_memberId_fkey")
+}
+
+model Payment {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  memberId  Int
+  groupId   Int
+  item      String   @default("membership")
+  amount    Int
+  method    String
+  paymentAt DateTime @db.Timestamp(0)
+  createdAt DateTime @default(now())
+  Group     Group    @relation(fields: [groupId], references: [id])
+  Member    Member   @relation(fields: [memberId], references: [id])
+  User      User     @relation(fields: [userId], references: [id])
+
+  @@index([groupId], map: "Payment_groupId_fkey")
+  @@index([memberId], map: "Payment_memberId_fkey")
+  @@index([userId], map: "Payment_userId_fkey")
+}
+
+model Requirement {
+  id       Int    @id @default(autoincrement())
+  groupId  Int
+  name     String @db.VarChar(50)
+  reqOrder Int
+  Group    Group  @relation(fields: [groupId], references: [id])
+
+  @@index([groupId], map: "Requirement_groupId_fkey")
 }
 
 model Token {
@@ -51,17 +125,4 @@ model Token {
   User      User     @relation(fields: [userId], references: [id], onDelete: Cascade, map: "Token_userId_fkey")
 
   @@index([userId], map: "Token_userId_fkey")
-}
-
-model Payment {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  groupId   Int
-  item      String
-  amount    Int
-  method    String
-  paymentAt DateTime @db.Timestamp(0)
-  createdAt DateTime @default(now())
-  User      User     @relation(fields: [userId], references: [id])
-  Group     Group    @relation(fields: [groupId], references: [id])
 }

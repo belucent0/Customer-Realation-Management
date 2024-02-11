@@ -23,4 +23,13 @@ export class CreateUserDto {
     @IsNotEmpty({ message: "휴대전화를 입력해주세요." })
     @IsPhoneNumber("KR", { message: "휴대전화는 10자 혹은 11자로 입력해주세요." })
     phone: string;
+
+    @IsNotEmpty({ message: "주소를 입력해주세요." })
+    @IsString()
+    @Length(1, 200, { message: "주소는 $constraint1자에서 $constraint2자 사이로 입력해주세요." })
+    address1: string;
+
+    @IsString()
+    @Length(1, 200, { message: "상세주소는 $constraint1자에서 $constraint2자 사이로 입력해주세요." })
+    address2?: string;
 }

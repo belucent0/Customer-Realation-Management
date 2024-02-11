@@ -54,6 +54,8 @@ export class UsersService {
                         userName: createUserDto.userName,
                         email: createUserDto.email,
                         phone: createUserDto.phone,
+                        address1: createUserDto.address1,
+                        address2: createUserDto.address2 || "",
                     },
                 });
 

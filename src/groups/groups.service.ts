@@ -3,12 +3,13 @@ import { CreateGroupDto } from "./dto/create-group.dto";
 import { UpdateGroupDto } from "./dto/update-group.dto";
 import { PrismaService } from "src/prisma.service";
 import { Group } from "./entities/group.entity";
+import * as dayjs from "dayjs";
 
 @Injectable()
 export class GroupsService {
     constructor(private readonly prisma: PrismaService) {}
 
-    async createGroup(userId: number, createGroupDto: CreateGroupDto): Promise<Group> {
+    async createGroup(userId: number, createGroupDto: CreateGroupDto) {
         try {
             const isExist = await this.prisma.group.findUnique({
                 where: { groupName: createGroupDto.groupName },
@@ -18,16 +19,31 @@ export class GroupsService {
                 throw new BadRequestException("동일한 그룹명이 존재합니다.");
             }
 
-            const newGroup = await this.prisma.group.create({
-                data: {
-                    groupName: createGroupDto.groupName,
-                    Member: {
-                        create: {
-                            userId: userId,
-                            status: "owner",
-                        },
+            // 트랜잭션: 그룹 생성 -> 멤버 생성
+            const newGroup = await this.prisma.$transaction(async prisma => {
+                const group = await prisma.group.create({
+                    data: {
+                        groupName: createGroupDto.groupName,
                     },
-                },
+                });
+
+                const user = await this.prisma.user.findUnique({
+                    where: { id: userId },
+                });
+
+                await prisma.member.create({
+                    data: {
+                        userId: userId,
+                        groupId: group.id,
+                        phone: user.phone,
+                        email: user.email,
+                        address1: user.address1,
+                        address2: user.address2 || "",
+                        role: "owner",
+                    },
+                });
+
+                return group;
             });
 
             return newGroup;
