@@ -14,6 +14,8 @@ import {
     Req,
     Query,
     DefaultValuePipe,
+    UseInterceptors,
+    UploadedFile,
 } from "@nestjs/common";
 import { GroupsService } from "./groups.service";
 import { CreateGroupDto, CreateMemberDto } from "./dto/create-group.dto";
@@ -21,11 +23,15 @@ import { UpdateGroupDto } from "./dto/update-group.dto";
 import { Group } from "@prisma/client";
 import { ResMessage } from "utils/response-message.decorator";
 import { AuthGuard } from "@nestjs/passport";
-import { create } from "domain";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { FileUploadService } from "utils/file-upload.service";
 
 @Controller("groups")
 export class GroupsController {
-    constructor(private readonly groupsService: GroupsService) {}
+    constructor(
+        private readonly groupsService: GroupsService,
+        private fileUploadService: FileUploadService,
+    ) {}
 
     //그룹 생성
     @Post()
@@ -74,15 +80,6 @@ export class GroupsController {
         return this.groupsService.remove(+groupId);
     }
 
-    // 멤버 개별 등록
-    @Post(":groupId/members")
-    @UseGuards(AuthGuard())
-    @HttpCode(HttpStatus.CREATED)
-    @ResMessage("멤버 등록 성공!")
-    addOneMember(@Param("groupId", ParseIntPipe) groupId: number, @Body() createMemberDto: CreateMemberDto) {
-        return this.groupsService.addOneMember(groupId, createMemberDto);
-    }
-
     // 멤버 목록 조회
     @Get(":groupId/members")
     @UseGuards(AuthGuard())
@@ -96,5 +93,27 @@ export class GroupsController {
     ) {
         const userId = req.user.id;
         return this.groupsService.findAllMembers(page, take, userId, groupId);
+    }
+
+    // 멤버 개별 등록
+    @Post(":groupId/members")
+    @UseGuards(AuthGuard())
+    @HttpCode(HttpStatus.CREATED)
+    @ResMessage("멤버 등록 성공!")
+    addOneMember(@Param("groupId", ParseIntPipe) groupId: number, @Body() createMemberDto: CreateMemberDto) {
+        return this.groupsService.addOneMember(groupId, createMemberDto);
+    }
+
+    // 멤버 정보 일괄 업로드
+    @Post(":groupId/members/bulk")
+    @UseGuards(AuthGuard())
+    @UseInterceptors(FileInterceptor("file"))
+    @HttpCode(HttpStatus.CREATED)
+    @ResMessage("멤버 등록 성공!")
+    async uploadBulkMembers(@Param("groupId", ParseIntPipe) groupId: number, @UploadedFile() file) {
+        const fileName = await this.fileUploadService.uploadFile(file);
+
+        // 업로드된 파일의 정보(fileName)를 비즈니스 로직에 전달하여 처리
+        return this.groupsService.uploadBulkMembers(groupId, fileName);
     }
 }

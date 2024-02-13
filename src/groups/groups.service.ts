@@ -239,4 +239,26 @@ export class GroupsService {
             throw new InternalServerErrorException("멤버 조회에 실패했습니다.");
         }
     }
+
+    async uploadBulkMembers(groupId: number, fileName: string) {
+        try {
+            const group = await this.prisma.group.findUnique({
+                where: { id: groupId },
+            });
+
+            if (!group) {
+                throw new BadRequestException("존재하지 않는 그룹입니다.");
+            }
+
+            const members = await this.prisma.member.findMany({
+                where: { groupId },
+            });
+        } catch (error) {
+            console.error(error);
+            if (error instanceof BadRequestException) {
+                throw error;
+            }
+            throw new InternalServerErrorException("멤버 등록에 실패했습니다.");
+        }
+    }
 }
