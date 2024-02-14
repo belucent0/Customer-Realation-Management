@@ -24,7 +24,7 @@ import { Group } from "@prisma/client";
 import { ResMessage } from "utils/response-message.decorator";
 import { AuthGuard } from "@nestjs/passport";
 import { FileInterceptor } from "@nestjs/platform-express";
-import { FileUploadService } from "utils/file-upload.service";
+import { FileUploadService } from "utils/file.service";
 
 @Controller("groups")
 export class GroupsController {
@@ -110,10 +110,9 @@ export class GroupsController {
     @UseInterceptors(FileInterceptor("file"))
     @HttpCode(HttpStatus.CREATED)
     @ResMessage("멤버 등록 성공!")
-    async uploadBulkMembers(@Param("groupId", ParseIntPipe) groupId: number, @UploadedFile() file) {
+    async uploadBulkMembers(@Param("groupId", ParseIntPipe) groupId: number, @UploadedFile() file: Express.Multer.File) {
         const fileName = await this.fileUploadService.uploadFile(file);
 
-        // 업로드된 파일의 정보(fileName)를 비즈니스 로직에 전달하여 처리
-        return this.groupsService.uploadBulkMembers(groupId, fileName);
+        return this.groupsService.uploadBulkMembers(groupId, file);
     }
 }

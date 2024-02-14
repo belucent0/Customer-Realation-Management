@@ -240,7 +240,7 @@ export class GroupsService {
         }
     }
 
-    async uploadBulkMembers(groupId: number, fileName: string) {
+    async uploadBulkMembers(groupId: number, fileName: any) {
         try {
             const group = await this.prisma.group.findUnique({
                 where: { id: groupId },
@@ -250,9 +250,7 @@ export class GroupsService {
                 throw new BadRequestException("존재하지 않는 그룹입니다.");
             }
 
-            const members = await this.prisma.member.findMany({
-                where: { groupId },
-            });
+            return 1;
         } catch (error) {
             console.error(error);
             if (error instanceof BadRequestException) {
