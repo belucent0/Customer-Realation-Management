@@ -127,9 +127,9 @@ export class AuthService extends PassportStrategy(Strategy) {
                 throw new UnauthorizedException("인증 정보가 없습니다. 다시 로그인해주세요.");
             }
 
-            if (dayjs(payload.exp).isAfter(dayjs())) {
-                throw new UnauthorizedException("인증이 만료되었습니다. 다시 로그인해주세요.");
-            }
+            // if (dayjs(payload.exp).isBefore(dayjs())) {
+            //     throw new UnauthorizedException("인증이 만료되었습니다. 다시 로그인해주세요.");
+            // }
 
             const user = await this.prisma.user.findUnique({
                 where: {

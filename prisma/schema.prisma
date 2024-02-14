@@ -8,18 +8,19 @@ datasource db {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  loginId   String    @unique
-  password  String
-  userName  String
-  phone     String    @unique @db.VarChar(11)
-  email     String    @unique
-  address1  String    @db.VarChar(200)
-  address2  String?   @db.VarChar(200)
-  createdAt DateTime  @default(now())
-  Member    Member[]
-  Payment   Payment[]
-  Token     Token[]
+  id         Int       @id @default(autoincrement())
+  loginId    String    @unique
+  password   String
+  userName   String
+  phone      String    @unique @db.VarChar(11)
+  email      String    @unique
+  postalCode String    @default("-") @db.VarChar(6)
+  address1   String    @db.VarChar(200)
+  address2   String?   @db.VarChar(200)
+  createdAt  DateTime  @default(now())
+  Member     Member[]
+  Payment    Payment[]
+  Token      Token[]
 }
 
 model Group {
@@ -34,27 +35,31 @@ model Group {
 }
 
 model Member {
-  id        Int       @id @default(autoincrement())
-  userId    Int?
-  groupId   Int
-  joinedAt  DateTime  @default(now())
-  userName  String    @db.VarChar(100)
-  phone     String    @db.VarChar(11)
-  email     String
-  address1  String?   @db.VarChar(200)
-  address2  String?   @db.VarChar(200)
-  grade     String    @default("basic")
-  role      String    @default("member")
-  createdAt DateTime  @default(now())
-  Meeting   Meeting[]
-  Group     Group     @relation(fields: [groupId], references: [id])
-  User      User?     @relation(fields: [userId], references: [id], onDelete: Restrict)
-  Payment   Payment[]
-  Renewal   Renewal[]
+  id           Int       @id @default(autoincrement())
+  userId       Int?
+  groupId      Int
+  joinedAt     DateTime  @default(now())
+  memberNumber String
+  userName     String    @db.VarChar(100)
+  phone        String    @db.VarChar(11)
+  email        String
+  postalCode   String    @default("-") @db.VarChar(6)
+  address1     String?   @db.VarChar(200)
+  address2     String?   @db.VarChar(200)
+  grade        String    @default("basic")
+  role         String    @default("member")
+  status       String    @default("active")
+  createdAt    DateTime  @default(now())
+  Meeting      Meeting[]
+  Group        Group     @relation(fields: [groupId], references: [id])
+  User         User?     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  Payment      Payment[]
+  Renewal      Renewal[]
 
   @@unique([userId, groupId])
   @@unique([groupId, phone])
   @@unique([groupId, email])
+  @@unique([groupId, memberNumber])
   @@index([groupId], map: "Member_groupId_fkey")
 }
 

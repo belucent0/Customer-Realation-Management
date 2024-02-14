@@ -21,10 +21,10 @@ import { GroupsService } from "./groups.service";
 import { CreateGroupDto, CreateMemberDto } from "./dto/create-group.dto";
 import { UpdateGroupDto } from "./dto/update-group.dto";
 import { Group } from "@prisma/client";
-import { ResMessage } from "utils/response-message.decorator";
+import { ResMessage } from "src/utils/response-message.decorator";
 import { AuthGuard } from "@nestjs/passport";
 import { FileInterceptor } from "@nestjs/platform-express";
-import { FileUploadService } from "utils/file.service";
+import { FileUploadService } from "src/providers/file-upload.service";
 
 @Controller("groups")
 export class GroupsController {
@@ -111,8 +111,12 @@ export class GroupsController {
     @HttpCode(HttpStatus.CREATED)
     @ResMessage("멤버 등록 성공!")
     async uploadBulkMembers(@Param("groupId", ParseIntPipe) groupId: number, @UploadedFile() file: Express.Multer.File) {
-        const fileName = await this.fileUploadService.uploadFile(file);
+        // const fileName = await this.fileUploadService.uploadFile(file);
 
-        return this.groupsService.uploadBulkMembers(groupId, file);
+        const newMember = await this.groupsService.uploadBulkMembers(groupId, file);
+
+        // const result = await this.groupsService.validateBulkMembers(groupId, newMember);
+
+        return newMember;
     }
 }

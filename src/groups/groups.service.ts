@@ -1,9 +1,9 @@
-import { BadRequestException, HttpStatus, Injectable, InternalServerErrorException } from "@nestjs/common";
+import { BadRequestException, Injectable, InternalServerErrorException } from "@nestjs/common";
 import { CreateGroupDto, CreateMemberDto } from "./dto/create-group.dto";
 import { UpdateGroupDto } from "./dto/update-group.dto";
 import { PrismaService } from "src/prisma.service";
 import { Group } from "./entities/group.entity";
-import * as dayjs from "dayjs";
+import * as XLSX from "xlsx";
 
 @Injectable()
 export class GroupsService {
@@ -44,11 +44,14 @@ export class GroupsService {
                         userId: userId,
                         groupId: group.id,
                         userName: user.userName,
+                        memberNumber: "00000",
                         phone: user.phone,
                         email: user.email,
+                        postalCode: user.postalCode,
                         address1: user.address1,
                         address2: user.address2 || "",
                         role: "owner",
+                        status: "active",
                     },
                 });
 
@@ -183,8 +186,10 @@ export class GroupsService {
                 data: {
                     groupId: groupId,
                     userName: createMemberDto.userName,
+                    memberNumber: createMemberDto.memberNumber,
                     phone: createMemberDto.phone,
                     email: createMemberDto.email,
+                    postalCode: createMemberDto.postalCode || "00000",
                     address1: createMemberDto.address1,
                     address2: createMemberDto.address2 || "",
                     role: "member",
@@ -240,7 +245,8 @@ export class GroupsService {
         }
     }
 
-    async uploadBulkMembers(groupId: number, fileName: any) {
+    // 멤버 정보 업로드 - 엑셀 파싱 및 컬럼명 확인
+    async uploadBulkMembers(groupId: number, file: Express.Multer.File) {
         try {
             const group = await this.prisma.group.findUnique({
                 where: { id: groupId },
@@ -249,8 +255,83 @@ export class GroupsService {
             if (!group) {
                 throw new BadRequestException("존재하지 않는 그룹입니다.");
             }
+            //엑셀 파일 파싱
 
-            return 1;
+            if (!file) {
+                throw new BadRequestException("파일이 첨부되지 않았습니다.");
+            }
+
+            const workbook: XLSX.WorkBook = XLSX.read(file.buffer, { type: "buffer" }); //엑셀 파일을 버퍼로 읽어옴
+            const sheetName = workbook.SheetNames[0];
+            const sheet: XLSX.WorkSheet = workbook.Sheets[sheetName]; //첫번쨰 Sheet 선택
+            const jsonData: any[] = XLSX.utils.sheet_to_json(sheet, { header: 1 }); // 엑셀 데이터를 json으로 변환
+
+            const excelFormatColums = [
+                "회원고유번호",
+                "이름",
+                "가입일",
+                "회원등급",
+                "연락처",
+                "이메일",
+                "우편번호",
+                "기본주소",
+                "상세주소",
+                "상태",
+            ];
+            const uploadColumns: string[] = (jsonData[0] as string[]).slice(0, excelFormatColums.length); // 업로드한 컬럼명을 가져옴
+
+            if (excelFormatColums.length !== uploadColumns.length) {
+                throw new BadRequestException("엑셀 파일의 컬럼 수가 일치하지 않습니다. 지정 양식 확인 후 다시 업로드 해주세요.");
+            }
+
+            const notMatchedColumns = uploadColumns.filter(uploadColumn => {
+                return !excelFormatColums.some(requiredColumn => uploadColumn.includes(requiredColumn));
+            });
+
+            if (notMatchedColumns.length > 0) {
+                throw new BadRequestException(
+                    `${notMatchedColumns.join(", ")}의 컬럼명이 일치하지 않습니다. 지정 양식 확인 후 다시 업로드 해주세요.`,
+                );
+            }
+
+            let uploadRows = jsonData.slice(1) as any[];
+
+            const firstEmptyIndex = uploadRows.findIndex(row => row.length === 0);
+            uploadRows = firstEmptyIndex === -1 ? uploadRows : uploadRows.slice(0, firstEmptyIndex);
+
+            if (uploadRows.length > 1000) {
+                throw new BadRequestException("업로드 오류 : 한 번에 1000개 이하의 행만 업로드할 수 있습니다.");
+            }
+
+            const newMembers = [];
+            const requiredColumns = [
+                "memberNumber",
+                "userName",
+                "joinedAt",
+                "grade",
+                "phone",
+                "email",
+                "postalCode",
+                "address1",
+                "address2",
+                "status",
+            ];
+
+            for (const uploadRow of uploadRows) {
+                const member = {};
+
+                requiredColumns.forEach((column, index) => {
+                    member[column] = uploadRow[index];
+                });
+                newMembers.push(member);
+            }
+
+            if (newMembers.length === 0) {
+                throw new BadRequestException("업로드할 멤버가 존재하지 않습니다.");
+            }
+
+            console.log(newMembers, "newMembers");
+            return newMembers;
         } catch (error) {
             console.error(error);
             if (error instanceof BadRequestException) {
@@ -259,4 +340,6 @@ export class GroupsService {
             throw new InternalServerErrorException("멤버 등록에 실패했습니다.");
         }
     }
+
+    async validateBulkMembers(groupId: number, newMembers: any[]) {}
 }

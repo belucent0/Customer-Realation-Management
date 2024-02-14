@@ -8,6 +8,10 @@ export class CreateGroupDto {
 }
 
 export class CreateMemberDto {
+    @IsNotEmpty({ message: "회원번호를 입력해주세요." })
+    @Length(1, 30, { message: "회원번호는 $constraint1자에서 $constraint2자 사이로 입력해주세요." })
+    memberNumber: string;
+
     @IsNotEmpty({ message: "이름을 입력해주세요." })
     @IsString({ message: "이름은 문자열로 입력해주세요." })
     @Length(1, 20, { message: "이름은 $constraint1자에서 $constraint2자 사이로 입력해주세요." })
@@ -23,12 +27,18 @@ export class CreateMemberDto {
     @Length(10, 11, { message: "휴대전화는 $constraint1자 혹은 $constraint2자로 입력해주세요." })
     phone: string;
 
-    @IsNotEmpty({ message: "주소를 입력해주세요." })
+    @Length(5, 6, { message: "우편번호는 $constraint1자 혹은 $constraint2자로 입력해주세요." })
+    postalCode?: string;
+
     @IsString()
     @Length(1, 200, { message: "주소는 $constraint1자에서 $constraint2자 사이로 입력해주세요." })
-    address1: string;
+    address1?: string;
 
     @IsString()
     @Length(1, 200, { message: "상세주소는 $constraint1자에서 $constraint2자 사이로 입력해주세요." })
     address2?: string;
+
+    @IsString()
+    @Length(1, 10, { message: "회원상태는 $constraint1자에서 $constraint2자 사이로 입력해주세요." })
+    status?;
 }
