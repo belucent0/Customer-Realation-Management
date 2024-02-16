@@ -11,7 +11,7 @@ model User {
   id         Int       @id @default(autoincrement())
   loginId    String    @unique
   password   String
-  userName   String
+  userName   String    @db.VarChar(20)
   phone      String    @unique @db.VarChar(11)
   email      String    @unique
   postalCode String    @default("-") @db.VarChar(6)
@@ -40,7 +40,7 @@ model Member {
   groupId      Int
   joinedAt     DateTime  @default(now())
   memberNumber String
-  userName     String    @db.VarChar(100)
+  userName     String    @db.VarChar(20)
   phone        String    @db.VarChar(11)
   email        String
   postalCode   String    @default("-") @db.VarChar(6)

@@ -161,6 +161,7 @@ export class GroupsService {
             const isExist = await this.prisma.member.findMany({
                 where: {
                     OR: [
+                        { groupId, memberNumber: createMemberDto.memberNumber },
                         { groupId, phone: createMemberDto.phone },
                         { groupId, email: createMemberDto.email },
                     ],
@@ -169,6 +170,9 @@ export class GroupsService {
 
             const error = [];
             isExist.forEach(element => {
+                if (element.memberNumber === createMemberDto.memberNumber) {
+                    error.push("회원고유번호");
+                }
                 if (element.phone === createMemberDto.phone) {
                     error.push("휴대전화");
                 }
@@ -341,5 +345,123 @@ export class GroupsService {
         }
     }
 
-    async validateBulkMembers(groupId: number, newMembers: any[]) {}
+    // 멤버 정보 일괄 업로드 - 멤버 정보 유효성 검사
+    async validateBulkMembers(groupId: number, newMembers: any[]) {
+        const allColumns = [
+            { memberNumber: "회원고유번호" },
+            { userName: "이름" },
+            { joinedAt: "가입일" },
+            { grade: "회원등급" },
+            { phone: "연락처" },
+            { email: "이메일" },
+            { postalCode: "우편번호" },
+            { address1: "기본주소" },
+            { address2: "상세주소" },
+            { status: "상태" },
+        ];
+        const essentailColumns = ["memberNumber", "userName", "phone", "email"];
+
+        const passedRows = [];
+        const errorColumns = [];
+
+        try {
+            const duplicatedMemberNumbers = (
+                await this.prisma.member.findMany({
+                    where: {
+                        groupId,
+                        memberNumber: {
+                            in: newMembers.map(member => member.memberNumber),
+                        },
+                    },
+                    select: {
+                        memberNumber: true,
+                    },
+                })
+            ).map(member => member.memberNumber);
+
+            for (const [index, member] of newMembers.entries()) {
+                let hasError = false;
+
+                const duplicatedInExcel = newMembers.filter(
+                    (row, idx) => idx !== index && row.memberNumber === member.memberNumber,
+                );
+
+                if (duplicatedInExcel.length > 0) {
+                    const duplicateRows = duplicatedInExcel.map(row => newMembers.indexOf(row) + 2);
+                    errorColumns.push(
+                        `${index + 2}행-회원고유번호 중복: ${duplicatedInExcel[0].memberNumber}는 이미 ${duplicateRows.join(",")}행에서 기재했습니다.`,
+                    );
+                    hasError = true;
+                }
+
+                if (duplicatedMemberNumbers.includes(member.memberNumber)) {
+                    errorColumns.push(
+                        `${index + 2}행-회원고유번호 중복: ${member.memberNumber}는 이미 시스템에 등록된 회원고유번호입니다.`,
+                    );
+                    hasError = true;
+                }
+
+                const emptyColumns = essentailColumns.filter(column => !member[column]);
+                if (emptyColumns.length > 0) {
+                    emptyColumns.forEach(column => {
+                        allColumns.forEach(columnName => {
+                            if (columnName[column]) {
+                                errorColumns.push(`${index + 2}행-${columnName[column]} 누락: 입력 필수 항목입니다.`);
+                            }
+                        });
+                    });
+                    hasError = true;
+                }
+
+                //이름 길이 체크
+                if (member.userName && member.userName.length > 20) {
+                    errorColumns.push(`${index + 2}행-이름 오류: 20자 이내로 입력해주세요.`);
+                    hasError = true;
+                }
+
+                // 연락처 10자리 혹은 11자리 숫자 체크
+                if (member.phone && !/^\d{10}$|^\d{11}$/.test(member.phone)) {
+                    errorColumns.push(`${index + 2}행-연락처 오류: 10자리 혹은 11자리 숫자로 입력해주세요.`);
+                    hasError = true;
+                }
+
+                // 이메일 형식 체크
+                if (member.email && !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(member.email)) {
+                    errorColumns.push(`${index + 2}행-이메일 오류: 이메일 형식에 맞게 입력해주세요.`);
+                    hasError = true;
+                }
+
+                //우편번호 5자리 혹은 6자리 숫자 체크
+                if (member.postalCode && !/^\d{5}$|^\d{6}$/.test(member.postalCode)) {
+                    errorColumns.push(`${index + 2}행-우편번호 오류: 5자리 혹은 6자리 숫자만 입력해주세요.`);
+                    hasError = true;
+                }
+
+                // 기본주소 길이 체크
+                if (member.address1 && member.address1.length > 100) {
+                    errorColumns.push(`${index + 2}행-기본주소 오류: 100자 이하로 입력해주세요.`);
+                    hasError = true;
+                }
+
+                // 상세주소 길이 체크
+                if (member.address2 && member.address2.length > 100) {
+                    errorColumns.push(`${index + 2}행-상세주소 오류: 100자 이하로 입력해주세요.`);
+                    hasError = true;
+                }
+
+                if (!hasError) {
+                    passedRows.push(member);
+                }
+            }
+
+            if (errorColumns.length > 0) {
+                return { passedRows: [], errorColumns };
+            }
+
+            return { passedRows, errorColumns };
+        } catch (error) {
+            console.error(error);
+            throw new InternalServerErrorException("멤버 등록에 실패했습니다.");
+        }
+    }
 }
