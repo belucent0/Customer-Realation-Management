@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from "@nestjs/common";
-import { CreateGroupDto, CreateMemberDto } from "./dto/create-group.dto";
+import { CreateGroupDto, CreateMemberDto, ValidatedMemberData } from "./dto/create-group.dto";
 import { UpdateGroupDto } from "./dto/update-group.dto";
 import { PrismaService } from "src/prisma.service";
 import { Group } from "./entities/group.entity";
@@ -379,6 +379,34 @@ export class GroupsService {
                 })
             ).map(member => member.memberNumber);
 
+            const duplicatedPhoneNumbers = (
+                await this.prisma.member.findMany({
+                    where: {
+                        groupId,
+                        phone: {
+                            in: newMembers.map(member => member.phone),
+                        },
+                    },
+                    select: {
+                        phone: true,
+                    },
+                })
+            ).map(member => member.phone);
+
+            const duplicatedEmails = (
+                await this.prisma.member.findMany({
+                    where: {
+                        groupId,
+                        email: {
+                            in: newMembers.map(member => member.email),
+                        },
+                    },
+                    select: {
+                        email: true,
+                    },
+                })
+            ).map(member => member.email);
+
             for (const [index, member] of newMembers.entries()) {
                 let hasError = false;
 
@@ -401,6 +429,41 @@ export class GroupsService {
                     hasError = true;
                 }
 
+                // 연락처 중복
+                if (duplicatedPhoneNumbers.includes(member.phone)) {
+                    errorColumns.push(`${index + 2}행-연락처 중복: ${member.phone}는 이미 시스템에 등록된 연락처입니다.`);
+                    hasError = true;
+                }
+
+                // 연락처 엑셀 내부간 중복
+                const duplicatedPhoneInExcel = newMembers.filter((row, idx) => idx !== index && row.phone === member.phone);
+
+                if (duplicatedPhoneInExcel.length > 0) {
+                    const duplicateRows = duplicatedPhoneInExcel.map(row => newMembers.indexOf(row) + 2);
+                    errorColumns.push(
+                        `${index + 2}행-연락처 중복: ${duplicatedPhoneInExcel[0].phone}는 이미 ${duplicateRows.join(",")}행에서 기재했습니다.`,
+                    );
+                    hasError = true;
+                }
+
+                // 이메일 중복
+                if (duplicatedEmails.includes(member.email)) {
+                    errorColumns.push(`${index + 2}행-이메일 중복: ${member.email}는 이미 시스템에 등록된 이메일입니다.`);
+                    hasError = true;
+                }
+
+                // 이메일 엑셀 내부간 중복
+                const duplicatedEmailInExcel = newMembers.filter((row, idx) => idx !== index && row.email === member.email);
+
+                if (duplicatedEmailInExcel.length > 0) {
+                    const duplicateRows = duplicatedEmailInExcel.map(row => newMembers.indexOf(row) + 2);
+                    errorColumns.push(
+                        `${index + 2}행-이메일 중복: ${duplicatedEmailInExcel[0].email}는 이미 ${duplicateRows.join(",")}행에서 기재했습니다.`,
+                    );
+                    hasError = true;
+                }
+
+                //필수 항목 누락 체크
                 const emptyColumns = essentailColumns.filter(column => !member[column]);
                 if (emptyColumns.length > 0) {
                     emptyColumns.forEach(column => {
@@ -458,7 +521,45 @@ export class GroupsService {
                 return { passedRows: [], errorColumns };
             }
 
-            return { passedRows, errorColumns };
+            const tempIds = await this.tempSaveBulkMembers(groupId, passedRows);
+
+            return { tempIds, passedRows };
+        } catch (error) {
+            console.error(error);
+            throw new InternalServerErrorException("멤버 정보 검증에 실패했습니다.");
+        }
+    }
+
+    // 멤버 정보 일괄 업로드 - 임시 테이블 멤버 정보 저장
+    async tempSaveBulkMembers(groupId: number, validatedMemberData: ValidatedMemberData[]) {
+        try {
+            const savedMembers = await this.prisma.$transaction(async prisma => {
+                const members = await Promise.all(
+                    validatedMemberData.map(member => {
+                        return prisma.member.create({
+                            data: {
+                                groupId: groupId,
+                                memberNumber: member.memberNumber,
+                                userName: member.userName,
+                                phone: member.phone,
+                                email: member.email,
+                                postalCode: member.postalCode || "00000",
+                                address1: member.address1,
+                                address2: member.address2 || "",
+                                status: member.status || "active",
+                            },
+
+                            select: {
+                                id: true,
+                            },
+                        });
+                    }),
+                ).then(members => members.map(member => member.id));
+
+                return members;
+            });
+
+            return savedMembers;
         } catch (error) {
             console.error(error);
             throw new InternalServerErrorException("멤버 등록에 실패했습니다.");

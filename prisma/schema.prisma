@@ -32,6 +32,7 @@ model Group {
   Payment     Payment[]
   Renewal     Renewal[]
   Requirement Requirement[]
+  TempMember  TempMember[]
 }
 
 model Member {
@@ -61,6 +62,28 @@ model Member {
   @@unique([groupId, email])
   @@unique([groupId, memberNumber])
   @@index([groupId], map: "Member_groupId_fkey")
+}
+
+model TempMember {
+  id           Int      @id @default(autoincrement())
+  groupId      Int
+  memberNumber String
+  userName     String   @db.VarChar(20)
+  phone        String   @db.VarChar(11)
+  email        String
+  postalCode   String   @default("-") @db.VarChar(6)
+  address1     String?  @db.VarChar(200)
+  address2     String?  @db.VarChar(200)
+  grade        String   @default("basic")
+  role         String   @default("member")
+  status       String   @default("active")
+  createdAt    DateTime @default(now())
+  Group        Group    @relation(fields: [groupId], references: [id])
+
+  @@unique([groupId, phone])
+  @@unique([groupId, email])
+  @@unique([groupId, memberNumber])
+  @@index([groupId], map: "TempMember_groupId_fkey")
 }
 
 model Renewal {

@@ -115,8 +115,8 @@ export class GroupsController {
 
         const newMember = await this.groupsService.uploadBulkMembers(groupId, file);
 
-        const result = await this.groupsService.validateBulkMembers(groupId, newMember);
+        const validatedResult = await this.groupsService.validateBulkMembers(groupId, newMember);
 
-        return result;
+        return validatedResult;
     }
 }
