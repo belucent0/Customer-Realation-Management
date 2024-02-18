@@ -1,9 +1,10 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from "@nestjs/common";
-import { CreateGroupDto, CreateMemberDto, ValidatedMemberData } from "./dto/create-group.dto";
+import { CreateGroupDto, CreateMemberDto, MemberData } from "./dto/create-group.dto";
 import { UpdateGroupDto } from "./dto/update-group.dto";
 import { PrismaService } from "src/prisma.service";
 import { Group } from "./entities/group.entity";
 import * as XLSX from "xlsx";
+import * as dayjs from "dayjs";
 
 @Injectable()
 export class GroupsService {
@@ -191,6 +192,7 @@ export class GroupsService {
                     groupId: groupId,
                     userName: createMemberDto.userName,
                     memberNumber: createMemberDto.memberNumber,
+
                     phone: createMemberDto.phone,
                     email: createMemberDto.email,
                     postalCode: createMemberDto.postalCode || "00000",
@@ -259,7 +261,6 @@ export class GroupsService {
             if (!group) {
                 throw new BadRequestException("존재하지 않는 그룹입니다.");
             }
-            //엑셀 파일 파싱
 
             if (!file) {
                 throw new BadRequestException("파일이 첨부되지 않았습니다.");
@@ -334,7 +335,6 @@ export class GroupsService {
                 throw new BadRequestException("업로드할 멤버가 존재하지 않습니다.");
             }
 
-            console.log(newMembers, "newMembers");
             return newMembers;
         } catch (error) {
             console.error(error);
@@ -346,7 +346,8 @@ export class GroupsService {
     }
 
     // 멤버 정보 일괄 업로드 - 멤버 정보 유효성 검사
-    async validateBulkMembers(groupId: number, newMembers: any[]) {
+    async validateBulkMembers(groupId: number, newMembers: MemberData[]) {
+        console.log(newMembers[0].joinedAt, "newMembers");
         const allColumns = [
             { memberNumber: "회원고유번호" },
             { userName: "이름" },
@@ -360,6 +361,7 @@ export class GroupsService {
             { status: "상태" },
         ];
         const essentailColumns = ["memberNumber", "userName", "phone", "email"];
+        const stringColumns = ["userName", "joinedAt", "grade", "address1", "address2", "status"];
 
         const passedRows = [];
         const errorColumns = [];
@@ -476,6 +478,16 @@ export class GroupsService {
                     hasError = true;
                 }
 
+                //문자열 타입 체크
+                stringColumns.forEach(column => {
+                    if (member[column] && typeof member[column] !== "string") {
+                        errorColumns.push(
+                            `${index + 2}행-${allColumns.find(col => col[column])[column]} 오류: 문자열로 입력해주세요.`,
+                        );
+                        hasError = true;
+                    }
+                });
+
                 //이름 길이 체크
                 if (member.userName && member.userName.length > 20) {
                     errorColumns.push(`${index + 2}행-이름 오류: 20자 이내로 입력해주세요.`);
@@ -531,35 +543,40 @@ export class GroupsService {
     }
 
     // 멤버 정보 일괄 업로드 - 임시 테이블 멤버 정보 저장
-    async tempSaveBulkMembers(groupId: number, validatedMemberData: ValidatedMemberData[]) {
+    async tempSaveBulkMembers(groupId: number, validatedMemberData: MemberData[]) {
         try {
-            const savedMembers = await this.prisma.$transaction(async prisma => {
-                const members = await Promise.all(
-                    validatedMemberData.map(member => {
-                        return prisma.member.create({
-                            data: {
-                                groupId: groupId,
-                                memberNumber: member.memberNumber,
-                                userName: member.userName,
-                                phone: member.phone,
-                                email: member.email,
-                                postalCode: member.postalCode || "00000",
-                                address1: member.address1,
-                                address2: member.address2 || "",
-                                status: member.status || "active",
-                            },
+            const membersData = validatedMemberData.map(member => ({
+                groupId: groupId,
+                memberNumber: member.memberNumber,
+                userName: member.userName,
+                joinedAt: dayjs(member.joinedAt).toISOString(),
+                grade: member.grade,
+                phone: member.phone,
+                email: member.email,
+                postalCode: member.postalCode || "00000",
+                address1: member.address1,
+                address2: member.address2 || "",
+                status: member.status || "active",
+            }));
 
-                            select: {
-                                id: true,
-                            },
-                        });
-                    }),
-                ).then(members => members.map(member => member.id));
-
-                return members;
+            await this.prisma.member.createMany({
+                data: membersData,
             });
 
-            return savedMembers;
+            const tempIds = (
+                await this.prisma.member.findMany({
+                    where: {
+                        memberNumber: {
+                            in: membersData.map(member => member.memberNumber),
+                        },
+                    },
+                    select: {
+                        id: true,
+                    },
+                })
+            ).map(member => member.id);
+
+            return tempIds;
         } catch (error) {
             console.error(error);
             throw new InternalServerErrorException("멤버 등록에 실패했습니다.");

@@ -109,14 +109,10 @@ export class GroupsController {
     @UseGuards(AuthGuard())
     @UseInterceptors(FileInterceptor("file"))
     @HttpCode(HttpStatus.CREATED)
-    @ResMessage("멤버 등록 성공!")
+    @ResMessage("멤버 일괄 업로드 성공!")
     async uploadBulkMembers(@Param("groupId", ParseIntPipe) groupId: number, @UploadedFile() file: Express.Multer.File) {
         // const fileName = await this.fileUploadService.uploadFile(file);
-
         const newMember = await this.groupsService.uploadBulkMembers(groupId, file);
-
-        const validatedResult = await this.groupsService.validateBulkMembers(groupId, newMember);
-
-        return validatedResult;
+        return await this.groupsService.validateBulkMembers(groupId, newMember);
     }
 }

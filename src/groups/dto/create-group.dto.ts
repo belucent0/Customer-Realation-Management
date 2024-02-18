@@ -17,6 +17,9 @@ export class CreateMemberDto {
     @Length(1, 20, { message: "이름은 $constraint1자에서 $constraint2자 사이로 입력해주세요." })
     userName: string;
 
+    joinedAt?: string;
+
+    grade?: string;
     @IsNotEmpty({ message: "이메일을 입력해주세요." })
     @IsEmail({}, { message: "이메일 형식에 맞지 않습니다." })
     @Length(1, 50, { message: "이메일은 $constraint1자에서 $constraint2자 사이로 입력해주세요." })
@@ -43,13 +46,15 @@ export class CreateMemberDto {
     status?;
 }
 
-export class ValidatedMemberData {
+export class MemberData {
     memberNumber: string;
     userName: string;
-    email: string;
+    joinedAt?: string;
+    grade?: string;
     phone: string;
-    postalCode: string;
-    address1: string;
-    address2: string;
-    status: string;
+    email: string;
+    postalCode?: string;
+    address1?: string;
+    address2?: string;
+    status?;
 }
