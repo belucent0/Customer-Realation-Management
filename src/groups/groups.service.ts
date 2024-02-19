@@ -559,12 +559,12 @@ export class GroupsService {
                 status: member.status || "active",
             }));
 
-            await this.prisma.member.createMany({
+            await this.prisma.tempMember.createMany({
                 data: membersData,
             });
 
             const tempIds = (
-                await this.prisma.member.findMany({
+                await this.prisma.tempMember.findMany({
                     where: {
                         memberNumber: {
                             in: membersData.map(member => member.memberNumber),
@@ -577,6 +577,53 @@ export class GroupsService {
             ).map(member => member.id);
 
             return tempIds;
+        } catch (error) {
+            console.error(error);
+            throw new InternalServerErrorException("멤버 등록에 실패했습니다.");
+        }
+    }
+
+    // 멤버 정보 일괄 등록
+    async registerBulkMembers(groupId: number, tempIds: number[]) {
+        try {
+            console.log(tempIds, "tempIds");
+            const tempMembers = await this.prisma.tempMember.findMany({
+                where: {
+                    id: {
+                        in: tempIds,
+                    },
+                },
+            });
+
+            console.log(tempMembers, "tempMembers");
+
+            const newMembers = tempMembers.map(member => ({
+                groupId: groupId,
+                memberNumber: member.memberNumber,
+                userName: member.userName,
+                joinedAt: member.joinedAt,
+                grade: member.grade,
+                phone: member.phone,
+                email: member.email,
+                postalCode: member.postalCode,
+                address1: member.address1,
+                address2: member.address2,
+                status: member.status,
+            }));
+
+            await this.prisma.member.createMany({
+                data: newMembers,
+            });
+
+            await this.prisma.tempMember.deleteMany({
+                where: {
+                    id: {
+                        in: tempIds,
+                    },
+                },
+            });
+
+            return newMembers;
         } catch (error) {
             console.error(error);
             throw new InternalServerErrorException("멤버 등록에 실패했습니다.");

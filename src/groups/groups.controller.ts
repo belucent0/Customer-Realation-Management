@@ -115,4 +115,13 @@ export class GroupsController {
         const newMember = await this.groupsService.uploadBulkMembers(groupId, file);
         return await this.groupsService.validateBulkMembers(groupId, newMember);
     }
+
+    // 멤버 정보 일괄 등록
+    @Post(":groupId/members/bulk/register")
+    @UseGuards(AuthGuard())
+    @HttpCode(HttpStatus.CREATED)
+    @ResMessage("멤버 일괄 등록 성공!")
+    async registerBulkMembers(@Param("groupId", ParseIntPipe) groupId: number, @Body("tempIds") tempIds: number[]) {
+        return await this.groupsService.registerBulkMembers(groupId, tempIds);
+    }
 }
