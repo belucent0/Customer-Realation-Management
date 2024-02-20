@@ -8,19 +8,15 @@ datasource db {
 }
 
 model User {
-  id         Int       @id @default(autoincrement())
-  loginId    String    @unique
-  password   String
-  userName   String    @db.VarChar(20)
-  phone      String    @unique @db.VarChar(11)
-  email      String    @unique
-  postalCode String    @default("-") @db.VarChar(6)
-  address1   String    @db.VarChar(200)
-  address2   String?   @db.VarChar(200)
-  createdAt  DateTime  @default(now())
-  Member     Member[]
-  Payment    Payment[]
-  Token      Token[]
+  id        Int      @id @default(autoincrement())
+  loginId   String   @unique
+  password  String
+  userName  String   @db.VarChar(20)
+  phone     String   @unique @db.VarChar(11)
+  email     String   @unique
+  createdAt DateTime @default(now())
+  Member    Member[]
+  Token     Token[]
 }
 
 model Group {
@@ -113,14 +109,10 @@ model Meeting {
   createdAt DateTime @default(now())
   Group     Group    @relation(fields: [groupId], references: [id])
   Member    Member   @relation(fields: [memberId], references: [id])
-
-  @@index([groupId], map: "Meeting_groupId_fkey")
-  @@index([memberId], map: "Meeting_memberId_fkey")
 }
 
 model Payment {
   id        Int      @id @default(autoincrement())
-  userId    Int
   memberId  Int
   groupId   Int
   item      String   @default("membership")
@@ -130,11 +122,6 @@ model Payment {
   createdAt DateTime @default(now())
   Group     Group    @relation(fields: [groupId], references: [id])
   Member    Member   @relation(fields: [memberId], references: [id])
-  User      User     @relation(fields: [userId], references: [id])
-
-  @@index([groupId], map: "Payment_groupId_fkey")
-  @@index([memberId], map: "Payment_memberId_fkey")
-  @@index([userId], map: "Payment_userId_fkey")
 }
 
 model Requirement {

@@ -1,9 +1,26 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, UseGuards, HttpStatus, Req } from "@nestjs/common";
+import {
+    Controller,
+    Get,
+    Post,
+    Body,
+    Patch,
+    Param,
+    Delete,
+    HttpCode,
+    UseGuards,
+    HttpStatus,
+    Req,
+    Query,
+    DefaultValuePipe,
+    ParseIntPipe,
+} from "@nestjs/common";
 import { PaymentService } from "./payment.service";
 import { CreatePaymentDto } from "./dto/create-payment.dto";
 import { UpdatePaymentDto } from "./dto/update-payment.dto";
 import { ResMessage } from "src/utils/response-message.decorator";
 import { AuthGuard } from "@nestjs/passport";
+import { FindAllPaymentsDto } from "./dto/find-payment.dto";
+import { Payment } from "@prisma/client";
 
 @Controller("payment")
 export class PaymentController {
@@ -12,15 +29,19 @@ export class PaymentController {
     @Post()
     @UseGuards(AuthGuard())
     @HttpCode(HttpStatus.CREATED)
-    @ResMessage("납부 내역 생성!")
-    createPayment(@Req() req, @Body() createPaymentDto: CreatePaymentDto) {
+    @ResMessage("납부 내역 추가 성공!")
+    createPayment(@Req() req, @Body() createPaymentDto: CreatePaymentDto): Promise<Payment> {
         const userId = req.user.id;
         return this.paymentService.createPayment(userId, createPaymentDto);
     }
 
     @Get()
-    findAll() {
-        return this.paymentService.findAll();
+    @UseGuards(AuthGuard())
+    @HttpCode(HttpStatus.OK)
+    @ResMessage("납부 내역 조회 성공!")
+    findAllPayments(@Req() req, @Query() findAllPaymentsDto: FindAllPaymentsDto) {
+        const userId = req.user.id;
+        return this.paymentService.findAllPayments(userId, findAllPaymentsDto);
     }
 
     @Get(":id")

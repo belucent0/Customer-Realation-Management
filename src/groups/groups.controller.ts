@@ -33,6 +33,15 @@ export class GroupsController {
         private fileUploadService: FileUploadService,
     ) {}
 
+    //그룹 목록 조회
+    @Get()
+    @UseGuards(AuthGuard())
+    @HttpCode(HttpStatus.OK)
+    @ResMessage("그룹 목록 조회 성공!")
+    findAll() {
+        return this.groupsService.findAllGroup();
+    }
+
     //그룹 생성
     @Post()
     @UseGuards(AuthGuard())
@@ -50,15 +59,6 @@ export class GroupsController {
     @ResMessage("사용 가능한 그룹명입니다.")
     async checkGroupName(@Body("groupName") groupName: string) {
         return this.groupsService.checkGroupName(groupName);
-    }
-
-    //그룹 목록 조회
-    @Get()
-    @UseGuards(AuthGuard())
-    @HttpCode(HttpStatus.OK)
-    @ResMessage("그룹 목록 조회 성공!")
-    findAll() {
-        return this.groupsService.findAllGroup();
     }
 
     //그룹 상세 조회

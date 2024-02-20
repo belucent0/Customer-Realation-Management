@@ -21,6 +21,7 @@ export class ResponseTransformInterceptor<T> implements NestInterceptor<T, Respo
             map(item => ({
                 statusCode: currentStatusCode,
                 message: messageFromMetaData || item.message || "",
+                meta: item.meta || false,
                 data: item.data || item,
             })),
         );
