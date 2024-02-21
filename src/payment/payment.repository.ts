@@ -61,12 +61,7 @@ export class PaymentRepository {
 
             return {
                 data: allPayments,
-                meta: {
-                    total,
-                    currentPage,
-                    lastPage,
-                    take,
-                },
+                meta: { total, currentPage, lastPage, take },
             };
         } catch (error) {
             console.error(error);

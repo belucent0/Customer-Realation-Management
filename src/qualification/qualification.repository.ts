@@ -1,13 +1,17 @@
 import { Injectable } from "@nestjs/common";
-import { UpdateQualificationDto } from "./dto/update-qualification.dto";
 import { PrismaService } from "src/prisma.service";
-import { CreateActivityDto } from "./dto/create-qualification.dto";
+import * as dayjs from "dayjs";
+import { FindAllActivityDto } from "./dto/find-qualification.dto";
+import { PaginatedResult } from "src/utils/paginator";
+import { Activity } from "@prisma/client";
+import { CreateOneActivityDto } from "./dto/create-qualification.dto";
 
 @Injectable()
 export class QualificationRepository {
     constructor(private readonly prisma: PrismaService) {}
 
-    async createActivity({ groupId, category, title, detail, place, meetingAt }: CreateActivityDto) {
+    // 행사 등록
+    async createOneActivity({ groupId, category, title, detail, place, meetingAt }: CreateOneActivityDto) {
         return await this.prisma.activity.create({
             data: {
                 groupId,
@@ -15,24 +19,75 @@ export class QualificationRepository {
                 title,
                 detail,
                 place,
-                meetingAt: "2021-10-10T00:00:00.000Z",
+                meetingAt: dayjs(meetingAt).toDate(),
             },
         });
     }
 
-    findAll() {
-        return `This action returns all qualification`;
+    // 행사 목록 조회
+    async findActivities({ page, take, groupId, startDate, endDate }: FindAllActivityDto): Promise<PaginatedResult<Activity>> {
+        try {
+            const [total, allActivity] = await Promise.all([
+                this.prisma.activity.count({
+                    where: {
+                        groupId,
+                        meetingAt: {
+                            gte: dayjs(startDate).toDate(),
+                            lte: dayjs(endDate).toDate(),
+                        },
+                    },
+                }),
+                this.prisma.activity.findMany({
+                    where: {
+                        groupId,
+                        meetingAt: {
+                            gte: dayjs(startDate).toDate(),
+                            lte: dayjs(endDate).toDate(),
+                        },
+                    },
+                    skip: (page - 1) * take,
+                    take,
+                }),
+            ]);
+
+            const currentPage = page;
+            const lastPage = Math.ceil(total / take);
+            return {
+                data: allActivity,
+                meta: { total, currentPage, lastPage, take },
+            };
+        } catch (error) {
+            console.error(error);
+            throw new Error("findAllActivity error");
+        }
     }
 
-    findOne(id: number) {
-        return `This action returns a #${id} qualification`;
+    // 행사 상세 조회
+    async findOneActivity(activityId: number) {
+        return await this.prisma.activity.findUnique({
+            where: {
+                id: activityId,
+            },
+        });
     }
 
-    update(id: number, updateQualificationDto: UpdateQualificationDto) {
-        return `This action updates a #${id} qualification`;
+    // 행사 참석자 추가
+    async addAttendee(activityId: number, memberId: number) {
+        return await this.prisma.attendee.create({
+            data: {
+                activityId,
+                memberId,
+            },
+        });
     }
 
-    remove(id: number) {
-        return `This action removes a #${id} qualification`;
+    // 기존 참석자인지 확인
+    async findOneAttendee(memberId: number, activityId: number) {
+        return await this.prisma.attendee.findFirst({
+            where: {
+                memberId,
+                activityId,
+            },
+        });
     }
 }

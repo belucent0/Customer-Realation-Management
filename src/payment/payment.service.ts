@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { CreatePaymentDto } from "./dto/create-payment.dto";
-import { UpdatePaymentDto } from "./dto/update-payment.dto";
 import { PaymentRepository } from "./payment.repository";
 import { FindAllPaymentsDto } from "./dto/find-payment.dto";
 import { PaginatedResult } from "src/utils/paginator";
@@ -33,6 +32,9 @@ export class PaymentService {
             if (error instanceof BadRequestException) {
                 throw new BadRequestException(error.message);
             }
+            if (error instanceof BadRequestException) {
+                throw new BadRequestException(error.message);
+            }
             throw new Error("결제 내역 생성에 실패했습니다.");
         }
     }
@@ -58,17 +60,5 @@ export class PaymentService {
             }
             throw new Error("결제 내역 조회에 실패했습니다.");
         }
-    }
-
-    findOne(id: number) {
-        return `This action returns a #${id} payment`;
-    }
-
-    update(id: number, updatePaymentDto: UpdatePaymentDto) {
-        return `This action updates a #${id} payment`;
-    }
-
-    remove(id: number) {
-        return `This action removes a #${id} payment`;
     }
 }
