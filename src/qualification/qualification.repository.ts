@@ -81,8 +81,35 @@ export class QualificationRepository {
         });
     }
 
+    // 참석자 목록 조회
+    async findAttendees(activityId: number) {
+        return await this.prisma.attendee.findMany({
+            where: {
+                activityId,
+            },
+
+            select: {
+                Member: {
+                    select: {
+                        memberNumber: true,
+                        userName: true,
+                        phone: true,
+                        email: true,
+                        grade: true,
+                        status: true,
+                    },
+                },
+            },
+            orderBy: {
+                Member: {
+                    userName: "asc",
+                },
+            },
+        });
+    }
+
     // 기존 참석자인지 확인
-    async findOneAttendee(memberId: number, activityId: number) {
+    async findOneAttendee(activityId: number, memberId: number) {
         return await this.prisma.attendee.findFirst({
             where: {
                 memberId,

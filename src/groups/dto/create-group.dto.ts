@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsString, Length } from "class-validator";
+import { IsEmail, IsNotEmpty, IsOptional, IsString, Length } from "class-validator";
 
 export class CreateGroupDto {
     @IsNotEmpty({ message: "그룹명을 입력해주세요." })
@@ -30,6 +30,7 @@ export class CreateMemberDto {
     @Length(10, 11, { message: "휴대전화는 $constraint1자 혹은 $constraint2자로 입력해주세요." })
     phone: string;
 
+    @IsOptional()
     @Length(5, 6, { message: "우편번호는 $constraint1자 혹은 $constraint2자로 입력해주세요." })
     postalCode?: string;
 
@@ -37,10 +38,12 @@ export class CreateMemberDto {
     @Length(1, 200, { message: "주소는 $constraint1자에서 $constraint2자 사이로 입력해주세요." })
     address1?: string;
 
+    @IsOptional()
     @IsString()
     @Length(1, 200, { message: "상세주소는 $constraint1자에서 $constraint2자 사이로 입력해주세요." })
     address2?: string;
 
+    @IsOptional()
     @IsString()
     @Length(1, 10, { message: "회원상태는 $constraint1자에서 $constraint2자 사이로 입력해주세요." })
     status?;

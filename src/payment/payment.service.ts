@@ -16,16 +16,12 @@ export class PaymentService {
     // 납부 내역 생성
     async createPayment(userId: number, createPaymentDto: CreatePaymentDto): Promise<Payment> {
         try {
-            const memberRole = await this.groupsRepository.findOneMember(userId, createPaymentDto.groupId);
+            // 권한 확인
+            const memberRole = await this.groupsRepository.findMembersRole(userId, createPaymentDto.groupId);
 
-            if (!memberRole) {
-                throw new BadRequestException("해당 그룹에 속해있지 않습니다.");
-            }
-
-            if (memberRole.role !== "admin" && memberRole.role !== "owner") {
+            if (!memberRole || (memberRole.role !== "admin" && memberRole.role !== "owner")) {
                 throw new BadRequestException("권한이 없습니다.");
             }
-
             return await this.paymentRepository.createPayment(createPaymentDto);
         } catch (error) {
             console.error(error);
@@ -42,13 +38,10 @@ export class PaymentService {
     // 납부 내역 조회
     async findAllPayments(userId: number, findAllPaymentsDto: FindAllPaymentsDto): Promise<PaginatedResult<Payment>> {
         try {
-            const memberRole = await this.groupsRepository.findOneMember(userId, findAllPaymentsDto.groupId);
+            // 권한 확인
+            const memberRole = await this.groupsRepository.findMembersRole(userId, findAllPaymentsDto.groupId);
 
-            if (!memberRole) {
-                throw new BadRequestException("해당 그룹에 속해있지 않습니다.");
-            }
-
-            if (memberRole.role !== "admin" && memberRole.role !== "owner") {
+            if (!memberRole || (memberRole.role !== "admin" && memberRole.role !== "owner")) {
                 throw new BadRequestException("권한이 없습니다.");
             }
 

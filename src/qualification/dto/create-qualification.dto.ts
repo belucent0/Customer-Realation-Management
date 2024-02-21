@@ -1,5 +1,5 @@
 import { Transform } from "class-transformer";
-import { IsInt } from "class-validator";
+import { IsInt, IsString } from "class-validator";
 
 export class CreateOneActivityDto {
     @IsInt()
@@ -15,21 +15,21 @@ export class CreateOneActivityDto {
 }
 
 export class AddAttendeeDto {
-    @IsInt()
     @Transform(({ value }) => {
         return Number(value);
     })
     groupId: number;
 
-    @IsInt()
     @Transform(({ value }) => {
         return Number(value);
     })
     memberId: number;
 
-    @IsInt()
     @Transform(({ value }) => {
         return Number(value);
     })
     activityId: number;
+
+    @IsString()
+    memberNumber: string;
 }

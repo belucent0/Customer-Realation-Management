@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { AddAttendeeDto, CreateOneActivityDto } from "./dto/create-qualification.dto";
 import { QualificationRepository } from "./qualification.repository";
-import { FindAllActivityDto } from "./dto/find-qualification.dto";
+import { FindAllActivityDto, FindOneActivityDto } from "./dto/find-qualification.dto";
 import { PaginatedResult } from "src/utils/paginator";
 import { Activity, Attendee } from "@prisma/client";
 import { GroupsRepository } from "src/groups/groups.repository";
@@ -51,6 +51,37 @@ export class QualificationService {
         }
     }
 
+    // 행사 상세 조회
+    async findOneActivity(userId: number, findOneActivityDto: FindOneActivityDto) {
+        try {
+            const memberRole = await this.groupsRepository.findMembersRole(userId, findOneActivityDto.groupId);
+
+            if (!memberRole || (memberRole.role !== "admin" && memberRole.role !== "owner")) {
+                throw new BadRequestException("권한이 없습니다.");
+            }
+
+            const activityDetail = await this.qualificationRepository.findOneActivity(findOneActivityDto.activityId);
+
+            if (!activityDetail) {
+                throw new BadRequestException("해당 행사가 존재하지 않습니다.");
+            }
+
+            // 참석자 목록 조회
+            const attendees = await this.qualificationRepository.findAttendees(findOneActivityDto.activityId);
+
+            return {
+                activity: activityDetail,
+                attendees,
+            };
+        } catch (error) {
+            console.error(error);
+            if (error instanceof BadRequestException) {
+                throw new BadRequestException(error.message);
+            }
+            throw new Error("행사 상세 조회에 실패했습니다.");
+        }
+    }
+
     // 행사 참석자 추가
     async addAttendee(userId: number, addAttendeeDto: AddAttendeeDto): Promise<Attendee> {
         try {
@@ -61,29 +92,22 @@ export class QualificationService {
                 throw new BadRequestException("권한이 없습니다.");
             }
 
-            // 해당 행사 조회
-            const activity = await this.qualificationRepository.findOneActivity(addAttendeeDto.activityId);
-
-            if (!activity) {
-                throw new BadRequestException("해당 행사가 존재하지 않습니다.");
-            }
-
-            // 그룹 내 멤버인지 확인
-            const member = await this.groupsRepository.findOneMember(addAttendeeDto.memberId, addAttendeeDto.groupId);
+            // 그룹의 멤버인지 확인
+            const member = await this.groupsRepository.findOneMember(addAttendeeDto.groupId, addAttendeeDto.memberNumber);
 
             if (!member) {
-                throw new BadRequestException("해당 멤버는 이 그룹에 속해있지 않습니다.");
+                throw new BadRequestException("그룹에 존재하지 않는 멤버입니다.");
             }
 
             // 기존 참석자인지 확인
-            const attendee = await this.qualificationRepository.findOneAttendee(memberRole.id, activity.id);
+            const attendee = await this.qualificationRepository.findOneAttendee(addAttendeeDto.activityId, member.id);
 
             if (attendee) {
-                throw new BadRequestException("이미 참석자로 등록되어 있습니다.");
+                throw new BadRequestException("해당 멤버는 이미 참석자로 등록되어 있습니다.");
             }
 
             // 참석자 추가
-            return await this.qualificationRepository.addAttendee(activity.id, memberRole.id);
+            return await this.qualificationRepository.addAttendee(addAttendeeDto.activityId, member.id);
         } catch (error) {
             console.error(error);
             if (error instanceof BadRequestException) {
