@@ -23,35 +23,35 @@ model Group {
   id          Int           @id @default(autoincrement())
   groupName   String        @unique
   createdAt   DateTime      @default(now())
-  Meeting     Meeting[]
   Member      Member[]
   Payment     Payment[]
   Renewal     Renewal[]
   Requirement Requirement[]
   TempMember  TempMember[]
+  Activity    Activity[]
 }
 
 model Member {
-  id           Int       @id @default(autoincrement())
-  userId       Int?
-  groupId      Int
-  joinedAt     DateTime  @default(now())
-  memberNumber String
-  userName     String    @db.VarChar(20)
-  phone        String    @db.VarChar(11)
-  email        String
-  postalCode   String    @default("-") @db.VarChar(6)
-  address1     String?   @db.VarChar(200)
-  address2     String?   @db.VarChar(200)
-  grade        String    @default("basic")
-  role         String    @default("member")
-  status       String    @default("active")
-  createdAt    DateTime  @default(now())
-  Meeting      Meeting[]
-  Group        Group     @relation(fields: [groupId], references: [id])
-  User         User?     @relation(fields: [userId], references: [id], onDelete: Restrict)
-  Payment      Payment[]
-  Renewal      Renewal[]
+  id                Int                 @id @default(autoincrement())
+  userId            Int?
+  groupId           Int
+  joinedAt          DateTime            @default(now())
+  memberNumber      String
+  userName          String              @db.VarChar(20)
+  phone             String              @db.VarChar(11)
+  email             String
+  postalCode        String              @default("-") @db.VarChar(6)
+  address1          String?             @db.VarChar(200)
+  address2          String?             @db.VarChar(200)
+  grade             String              @default("basic")
+  role              String              @default("member")
+  status            String              @default("active")
+  createdAt         DateTime            @default(now())
+  Group             Group               @relation(fields: [groupId], references: [id])
+  User              User?               @relation(fields: [userId], references: [id], onDelete: Restrict)
+  Payment           Payment[]
+  Renewal           Renewal[]
+  Activity_Attendee Activity_Attendee[]
 
   @@unique([userId, groupId])
   @@unique([groupId, phone])
@@ -96,19 +96,24 @@ model Renewal {
   @@index([groupId], map: "Renewal_groupId_fkey")
 }
 
-model Meeting {
-  id        Int      @id @default(autoincrement())
-  memberId  Int
-  groupId   Int
-  category  String
-  reqOrder  String
-  title     String
-  content   String?
-  role      String
-  meetingAt DateTime @db.Timestamp(0)
-  createdAt DateTime @default(now())
-  Group     Group    @relation(fields: [groupId], references: [id])
-  Member    Member   @relation(fields: [memberId], references: [id])
+model Activity {
+  id                Int                 @id @default(autoincrement())
+  groupId           Int
+  category          String
+  title             String
+  detail            String?
+  place             String?
+  meetingAt         DateTime            @db.Timestamp(0)
+  Group             Group               @relation(fields: [groupId], references: [id])
+  Activity_Attendee Activity_Attendee[]
+}
+
+model Activity_Attendee {
+  id         Int      @id @default(autoincrement())
+  activityId Int
+  memberId   Int
+  Activity   Activity @relation(fields: [activityId], references: [id])
+  Member     Member   @relation(fields: [memberId], references: [id])
 }
 
 model Payment {
