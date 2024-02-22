@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Req, Query, UseGuards, HttpCode, HttpStatus } from "@nestjs/common";
 import { QualificationService } from "./qualification.service";
-import { AddAttendeeDto, CreateOneActivityDto } from "./dto/create-qualification.dto";
+import { AddAttendeesDto, CreateOneActivityDto } from "./dto/create-qualification.dto";
 import { FindAllActivityDto, FindOneActivityDto } from "./dto/find-qualification.dto";
 import { ResMessage } from "src/utils/response-message.decorator";
 import { AuthGuard } from "@nestjs/passport";
@@ -8,6 +8,9 @@ import { AuthGuard } from "@nestjs/passport";
 @Controller("qualification")
 export class QualificationController {
     constructor(private readonly qualificationService: QualificationService) {}
+
+    //자격 요건 등록
+    @Post()
 
     // 행사 등록
     @Post("activity")
@@ -36,12 +39,12 @@ export class QualificationController {
         return this.qualificationService.findOneActivity(req.user.id, findOneActivityDto);
     }
 
-    // 행사 참석자 추가
-    @Post("activity/attendee")
+    // 행사 참석자 일괄 추가
+    @Post("activity/attendees")
     @UseGuards(AuthGuard())
     @HttpCode(HttpStatus.CREATED)
-    @ResMessage("참석자 추가 성공!")
-    addAttendee(@Req() req, @Body() addAttendeeDto: AddAttendeeDto) {
-        return this.qualificationService.addAttendee(req.user.id, addAttendeeDto);
+    @ResMessage("참석자 일괄 추가 성공!")
+    addAttendees(@Req() req, @Body() addAttendeesDto: AddAttendeesDto) {
+        return this.qualificationService.addAttendees(req.user.id, addAttendeesDto);
     }
 }

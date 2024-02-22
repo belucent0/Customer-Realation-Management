@@ -81,14 +81,25 @@ export class QualificationRepository {
         });
     }
 
-    // 참석자 목록 조회
-    async findAttendees(activityId: number) {
+    // 행사 참석자 일괄 추가
+    async addAttendees(activityId: number, memberIds: number[]) {
+        return await this.prisma.attendee.createMany({
+            data: memberIds.map(memberId => ({
+                activityId,
+                memberId,
+            })),
+        });
+    }
+
+    // 참석자 목록 단순 조회
+    async getAllAttendees(activityId: number) {
         return await this.prisma.attendee.findMany({
             where: {
                 activityId,
             },
 
             select: {
+                id: true,
                 Member: {
                     select: {
                         memberNumber: true,
@@ -114,6 +125,27 @@ export class QualificationRepository {
             where: {
                 memberId,
                 activityId,
+            },
+        });
+    }
+
+    // 여러명을 동시에 기존 참석자인지 확인
+    async findAttendees(activityId: number, memberIds: number[]) {
+        console.log(memberIds, "memberIds");
+        return await this.prisma.attendee.findMany({
+            where: {
+                memberId: {
+                    in: memberIds,
+                },
+                activityId,
+            },
+            select: {
+                Member: {
+                    select: {
+                        memberNumber: true,
+                        userName: true,
+                    },
+                },
             },
         });
     }

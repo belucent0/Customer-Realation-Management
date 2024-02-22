@@ -99,21 +99,23 @@ model Renewal {
 model Activity {
   id        Int        @id @default(autoincrement())
   groupId   Int
-  category  String
+  category  String //세미나, 포럼
   title     String
   detail    String?
   place     String?
+  fee       Int?       @default(0)
   meetingAt DateTime   @db.Timestamp(0)
   Group     Group      @relation(fields: [groupId], references: [id])
   Attendee  Attendee[]
 }
 
 model Attendee {
-  id         Int      @id @default(autoincrement())
+  id         Int @id @default(autoincrement())
   activityId Int
   memberId   Int
-  Activity   Activity @relation(fields: [activityId], references: [id])
-  Member     Member   @relation(fields: [memberId], references: [id])
+
+  Activity Activity @relation(fields: [activityId], references: [id])
+  Member   Member   @relation(fields: [memberId], references: [id])
 
   @@unique([activityId, memberId])
 }

@@ -7,6 +7,7 @@ export class GroupsRepository {
 
     // 관리자 권한 확인
     async findMembersRole(userId: number, groupId: number) {
+        console.log(userId, groupId);
         return await this.prisma.member.findFirst({
             where: {
                 userId,
@@ -21,6 +22,22 @@ export class GroupsRepository {
             where: {
                 groupId,
                 memberNumber,
+            },
+        });
+    }
+
+    // 그룹 내 멤버 여부 일괄 조회
+    async findOurMembers(groupId: number, memberIds: number[]) {
+        return await this.prisma.member.findMany({
+            where: {
+                groupId,
+                id: {
+                    in: memberIds,
+                },
+            },
+            select: {
+                id: true,
+                userName: true,
             },
         });
     }

@@ -14,7 +14,7 @@ export class CreateOneActivityDto {
     meetingAt: Date;
 }
 
-export class AddAttendeeDto {
+export class AddAttendeesDto {
     @Transform(({ value }) => {
         return Number(value);
     })
@@ -23,13 +23,7 @@ export class AddAttendeeDto {
     @Transform(({ value }) => {
         return Number(value);
     })
-    memberId: number;
-
-    @Transform(({ value }) => {
-        return Number(value);
-    })
     activityId: number;
 
-    @IsString()
-    memberNumber: string;
+    memberIds: number[];
 }

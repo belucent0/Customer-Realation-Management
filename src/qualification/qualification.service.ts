@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
-import { AddAttendeeDto, CreateOneActivityDto } from "./dto/create-qualification.dto";
+import { AddAttendeesDto, CreateOneActivityDto } from "./dto/create-qualification.dto";
 import { QualificationRepository } from "./qualification.repository";
 import { FindAllActivityDto, FindOneActivityDto } from "./dto/find-qualification.dto";
 import { PaginatedResult } from "src/utils/paginator";
@@ -67,7 +67,7 @@ export class QualificationService {
             }
 
             // 참석자 목록 조회
-            const attendees = await this.qualificationRepository.findAttendees(findOneActivityDto.activityId);
+            const attendees = await this.qualificationRepository.getAllAttendees(findOneActivityDto.activityId);
 
             return {
                 activity: activityDetail,
@@ -82,38 +82,37 @@ export class QualificationService {
         }
     }
 
-    // 행사 참석자 추가
-    async addAttendee(userId: number, addAttendeeDto: AddAttendeeDto): Promise<Attendee> {
+    // 행사 참석자 일괄 추가, 멤버 넘버들을 담은 배열을 받아서, 행사 참석자로 추가
+    async addAttendees(userId: number, AddAttendeesDto: AddAttendeesDto) {
         try {
-            // 권한 확인
-            const memberRole = await this.groupsRepository.findMembersRole(userId, addAttendeeDto.groupId);
+            const memberRole = await this.groupsRepository.findMembersRole(userId, AddAttendeesDto.groupId);
 
             if (!memberRole || (memberRole.role !== "admin" && memberRole.role !== "owner")) {
                 throw new BadRequestException("권한이 없습니다.");
             }
 
-            // 그룹의 멤버인지 확인
-            const member = await this.groupsRepository.findOneMember(addAttendeeDto.groupId, addAttendeeDto.memberNumber);
+            // 그룹 내 멤버인지 확인
+            const members = await this.groupsRepository.findOurMembers(AddAttendeesDto.groupId, AddAttendeesDto.memberIds);
 
-            if (!member) {
-                throw new BadRequestException("그룹에 존재하지 않는 멤버입니다.");
+            if (members.length !== AddAttendeesDto.memberIds.length) {
+                throw new BadRequestException("그룹에 존재하지 않는 멤버를 선택하였습니다.");
             }
 
-            // 기존 참석자인지 확인
-            const attendee = await this.qualificationRepository.findOneAttendee(addAttendeeDto.activityId, member.id);
+            // 참석자 여부 확인
+            const addedAttendees = await this.qualificationRepository.findAttendees(AddAttendeesDto.activityId, AddAttendeesDto.memberIds);
 
-            if (attendee) {
-                throw new BadRequestException("해당 멤버는 이미 참석자로 등록되어 있습니다.");
+            if (addedAttendees.length > 0) {
+                throw new BadRequestException(`이미 참석자인 멤버: ${addedAttendees.map(attendee => attendee.Member.userName).join(", ")}`);
             }
 
             // 참석자 추가
-            return await this.qualificationRepository.addAttendee(addAttendeeDto.activityId, member.id);
+            return await this.qualificationRepository.addAttendees(AddAttendeesDto.activityId, AddAttendeesDto.memberIds);
         } catch (error) {
             console.error(error);
             if (error instanceof BadRequestException) {
                 throw new BadRequestException(error.message);
             }
-            throw new Error("행사 참석자 추가에 실패했습니다.");
+            throw new Error("행사 참석자 일괄 추가에 실패했습니다.");
         }
     }
 }
