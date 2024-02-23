@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
-import { AddAttendeesDto, CreateOneActivityDto } from "./dto/create-qualification.dto";
+import { AcquireQualificationDto, AddAttendeesDto, CreateOneActivityDto, CreateQualificationDto } from "./dto/create-qualification.dto";
 import { QualificationRepository } from "./qualification.repository";
 import { FindAllActivityDto, FindOneActivityDto } from "./dto/find-qualification.dto";
 import { PaginatedResult } from "src/utils/paginator";
@@ -12,6 +12,38 @@ export class QualificationService {
         private readonly qualificationRepository: QualificationRepository,
         private readonly groupsRepository: GroupsRepository,
     ) {}
+
+    // 자격 등록
+    async createQualification(userId: number, createQualificationDto: CreateQualificationDto) {
+        try {
+            const memberRole = await this.groupsRepository.findMembersRole(userId, createQualificationDto.groupId);
+
+            if (!memberRole || (memberRole.role !== "admin" && memberRole.role !== "owner")) {
+                throw new BadRequestException("권한이 없습니다.");
+            }
+
+            return await this.qualificationRepository.createQualification(createQualificationDto);
+        } catch (error) {
+            console.error(error);
+            throw new Error("createQualification error");
+        }
+    }
+
+    // 자격 취득 내역 생성
+    async acquireQualification(userId: number, acquireQualificationDto: AcquireQualificationDto) {
+        try {
+            const memberRole = await this.groupsRepository.findMembersRole(userId, acquireQualificationDto.groupId);
+
+            if (!memberRole || (memberRole.role !== "admin" && memberRole.role !== "owner")) {
+                throw new BadRequestException("권한이 없습니다.");
+            }
+
+            return await this.qualificationRepository.acquireQualification(acquireQualificationDto);
+        } catch (error) {
+            console.error(error);
+            throw new Error("acquireQualification error");
+        }
+    }
 
     // 행사 등록
     async createOneActivity(userId: number, createOneActivityDto: CreateOneActivityDto) {

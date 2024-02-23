@@ -4,11 +4,34 @@ import * as dayjs from "dayjs";
 import { FindAllActivityDto } from "./dto/find-qualification.dto";
 import { PaginatedResult } from "src/utils/paginator";
 import { Activity } from "@prisma/client";
-import { CreateOneActivityDto } from "./dto/create-qualification.dto";
+import { CreateOneActivityDto, CreateQualificationDto, AcquireQualificationDto } from "./dto/create-qualification.dto";
 
 @Injectable()
 export class QualificationRepository {
     constructor(private readonly prisma: PrismaService) {}
+
+    // 자격 등록
+    async createQualification({ groupId, title, renewalCycle }: CreateQualificationDto) {
+        return await this.prisma.qualification.create({
+            data: {
+                groupId,
+                title,
+                renewalCycle,
+            },
+        });
+    }
+
+    // 자격 취득 내역 생성
+    async acquireQualification({ memberId, qualificationId, acquiredAt, expiredAt }: AcquireQualificationDto) {
+        return await this.prisma.acquisition.create({
+            data: {
+                memberId,
+                qualificationId,
+                acquiredAt: dayjs(acquiredAt).toDate(),
+                expiredAt: dayjs(expiredAt).toDate(),
+            },
+        });
+    }
 
     // 행사 등록
     async createOneActivity({ groupId, category, title, detail, place, meetingAt }: CreateOneActivityDto) {
