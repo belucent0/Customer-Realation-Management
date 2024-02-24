@@ -38,8 +38,8 @@ export class GroupsController {
     @UseGuards(AuthGuard())
     @HttpCode(HttpStatus.OK)
     @ResMessage("그룹 목록 조회 성공!")
-    findAll() {
-        return this.groupsService.findAllGroup();
+    async getMyGroups(@Req() req) {
+        return this.groupsService.getMyGroups(req.user.id);
     }
 
     //그룹 생성
@@ -48,8 +48,7 @@ export class GroupsController {
     @HttpCode(HttpStatus.CREATED)
     @ResMessage("그룹 생성 성공!")
     async createGroup(@Req() req, @Body(new ValidationPipe()) createGroupDto: CreateGroupDto): Promise<Group> {
-        const userId = req.user.id;
-        return await this.groupsService.createGroup(userId, createGroupDto);
+        return await this.groupsService.createGroup(req.user.id, createGroupDto);
     }
 
     //그룹명 중복확인
@@ -66,18 +65,8 @@ export class GroupsController {
     @UseGuards(AuthGuard())
     @HttpCode(HttpStatus.OK)
     @ResMessage("그룹 상세 조회 성공!")
-    findOne(@Param("groupId", ParseIntPipe) groupId: number) {
-        return this.groupsService.findOne(+groupId);
-    }
-
-    @Patch(":groupId")
-    update(@Param("groupId", ParseIntPipe) groupId: number, @Body() updateGroupDto: UpdateGroupDto) {
-        return this.groupsService.update(+groupId, updateGroupDto);
-    }
-
-    @Delete(":groupId")
-    remove(@Param("groupId", ParseIntPipe) groupId: number) {
-        return this.groupsService.remove(+groupId);
+    getMyOneGroup(@Req() req, @Param("groupId", ParseIntPipe) groupId: number) {
+        return this.groupsService.getMyOneGroup(req.user.id, groupId);
     }
 
     // 멤버 목록 조회
@@ -91,8 +80,7 @@ export class GroupsController {
         @Query("page", new DefaultValuePipe(0), ParseIntPipe) page: number,
         @Query("take", new DefaultValuePipe(10), ParseIntPipe) take: number,
     ) {
-        const userId = req.user.id;
-        return this.groupsService.findAllMembers(page, take, userId, groupId);
+        return this.groupsService.findAllMembers(page, take, req.user.id, groupId);
     }
 
     // 멤버 개별 등록

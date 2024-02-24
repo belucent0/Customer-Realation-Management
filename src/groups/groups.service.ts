@@ -2,61 +2,34 @@ import { BadRequestException, Injectable, InternalServerErrorException } from "@
 import { CreateGroupDto, CreateMemberDto, MemberData } from "./dto/create-group.dto";
 import { UpdateGroupDto } from "./dto/update-group.dto";
 import { PrismaService } from "src/prisma.service";
-import { Group } from "./entities/group.entity";
 import * as XLSX from "xlsx";
 import * as dayjs from "dayjs";
+import { GroupsRepository } from "./groups.repository";
+import { Group } from "@prisma/client";
 
 @Injectable()
 export class GroupsService {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly groupsRepository: GroupsRepository,
+    ) {}
 
+    //그룹 생성
     async createGroup(userId: number, createGroupDto: CreateGroupDto) {
         try {
-            const isExistOwner = await this.prisma.member.findMany({
-                where: { userId, role: "owner" },
-            });
+            const isExistOwner = await this.groupsRepository.findGroupsYourOwned(userId);
 
             if (isExistOwner.length > 1) {
                 throw new BadRequestException("현재 플랜에서 2개 이상의 그룹을 생성할 수 없습니다.");
             }
 
-            const isExist = await this.prisma.group.findUnique({
-                where: { groupName: createGroupDto.groupName },
-            });
+            const isExist = await this.groupsRepository.findDuplicateGroupNames(createGroupDto.groupName);
 
             if (isExist) {
                 throw new BadRequestException("동일한 그룹명이 존재합니다.");
             }
 
-            // 트랜잭션: 그룹 생성 -> 멤버 생성
-            const newGroup = await this.prisma.$transaction(async prisma => {
-                const group = await prisma.group.create({
-                    data: {
-                        groupName: createGroupDto.groupName,
-                    },
-                });
-
-                const user = await this.prisma.user.findUnique({
-                    where: { id: userId },
-                });
-
-                await prisma.member.create({
-                    data: {
-                        userId: userId,
-                        groupId: group.id,
-                        userName: user.userName,
-                        memberNumber: "00000",
-                        phone: user.phone,
-                        email: user.email,
-                        role: "owner",
-                        status: "active",
-                    },
-                });
-
-                return group;
-            });
-
-            return newGroup;
+            return await this.groupsRepository.createGroup(userId, createGroupDto.groupName);
         } catch (error) {
             console.error(error);
             if (error instanceof BadRequestException) {
@@ -66,13 +39,12 @@ export class GroupsService {
         }
     }
 
+    //그룹명 중복 확인
     async checkGroupName(groupName: string): Promise<void> {
         try {
-            const isExist = await this.prisma.group.findUnique({
-                where: { groupName },
-            });
+            const isDuplicatedName = await this.groupsRepository.findDuplicateGroupNames(groupName);
 
-            if (isExist) {
+            if (isDuplicatedName) {
                 throw new BadRequestException("동일한 그룹명이 존재합니다.");
             }
 
@@ -86,70 +58,35 @@ export class GroupsService {
         }
     }
 
-    async findAllGroup(): Promise<Group[]> {
+    // 자신이 소유한 그룹 목록 조회
+    async getMyGroups(userId: number): Promise<Group[] | []> {
         try {
-            const groups = await this.prisma.group.findMany();
-
-            console.log(groups);
-            return groups;
+            return await this.groupsRepository.getMyGroups(userId);
         } catch (error) {
             console.error(error);
         }
     }
 
-    async findOne(id: number): Promise<Group> {
+    // 그룹 상세 조회
+    async getMyOneGroup(userId: number, groupId: number): Promise<Group> {
         try {
-            const group = await this.prisma.group.findUnique({
-                where: { id: id },
-            });
+            const memberRole = await this.groupsRepository.findMembersRole(userId, groupId);
 
-            if (!group) {
+            if (!memberRole || (memberRole.role !== "admin" && memberRole.role !== "owner")) {
+                throw new BadRequestException("권한이 없습니다.");
+            }
+            const oneGroup = await this.groupsRepository.getMyOneGroup(groupId);
+
+            if (!oneGroup) {
                 throw new BadRequestException("존재하지 않는 그룹입니다.");
             }
 
-            return group;
+            return oneGroup;
         } catch (error) {
             if (error instanceof BadRequestException) {
                 throw error;
             }
             throw new InternalServerErrorException("그룹 조회에 실패했습니다.");
-        }
-    }
-
-    async update(id: number, updateGroupDto: UpdateGroupDto): Promise<Group> {
-        try {
-            const updatedGroup = await this.prisma.group.update({
-                where: { id: id },
-                data: {
-                    groupName: updateGroupDto.groupName,
-                },
-            });
-
-            console.log(updatedGroup, "1updatedGroup");
-            return updatedGroup;
-        } catch (error) {
-            console.error(error);
-            throw new InternalServerErrorException("그룹 수정에 실패했습니다.");
-        }
-    }
-
-    async remove(id: number): Promise<Group> {
-        try {
-            const deletedGroup = await this.prisma.group.delete({
-                where: { id: id },
-            });
-
-            if (!deletedGroup) {
-                throw new BadRequestException("존재하지 않는 그룹입니다.");
-            }
-
-            return deletedGroup;
-        } catch (error) {
-            console.error(error);
-            if (error instanceof BadRequestException) {
-                throw error;
-            }
-            throw new InternalServerErrorException("그룹 삭제에 실패했습니다.");
         }
     }
 
@@ -180,9 +117,7 @@ export class GroupsService {
             });
 
             if (error.length > 0) {
-                throw new BadRequestException(
-                    `${error.join(", ")}의 값을 확인해주세요. 이미 동일한 값을 가진 멤버가 존재합니다.`,
-                );
+                throw new BadRequestException(`${error.join(", ")}의 값을 확인해주세요. 이미 동일한 값을 가진 멤버가 존재합니다.`);
             }
             const newMember = await this.prisma.member.create({
                 data: {
@@ -268,18 +203,7 @@ export class GroupsService {
             const sheet: XLSX.WorkSheet = workbook.Sheets[sheetName]; //첫번쨰 Sheet 선택
             const jsonData: any[] = XLSX.utils.sheet_to_json(sheet, { header: 1 }); // 엑셀 데이터를 json으로 변환
 
-            const excelFormatColums = [
-                "회원고유번호",
-                "이름",
-                "가입일",
-                "회원등급",
-                "연락처",
-                "이메일",
-                "우편번호",
-                "기본주소",
-                "상세주소",
-                "상태",
-            ];
+            const excelFormatColums = ["회원고유번호", "이름", "가입일", "회원등급", "연락처", "이메일", "우편번호", "기본주소", "상세주소", "상태"];
             const uploadColumns: string[] = (jsonData[0] as string[]).slice(0, excelFormatColums.length); // 업로드한 컬럼명을 가져옴
 
             if (excelFormatColums.length !== uploadColumns.length) {
@@ -409,9 +333,7 @@ export class GroupsService {
             for (const [index, member] of newMembers.entries()) {
                 let hasError = false;
 
-                const duplicatedInExcel = newMembers.filter(
-                    (row, idx) => idx !== index && row.memberNumber === member.memberNumber,
-                );
+                const duplicatedInExcel = newMembers.filter((row, idx) => idx !== index && row.memberNumber === member.memberNumber);
 
                 if (duplicatedInExcel.length > 0) {
                     const duplicateRows = duplicatedInExcel.map(row => newMembers.indexOf(row) + 2);
@@ -422,9 +344,7 @@ export class GroupsService {
                 }
 
                 if (duplicatedMemberNumbers.includes(member.memberNumber)) {
-                    errorColumns.push(
-                        `${index + 2}행-회원고유번호 중복: ${member.memberNumber}는 이미 시스템에 등록된 회원고유번호입니다.`,
-                    );
+                    errorColumns.push(`${index + 2}행-회원고유번호 중복: ${member.memberNumber}는 이미 시스템에 등록된 회원고유번호입니다.`);
                     hasError = true;
                 }
 
@@ -478,9 +398,7 @@ export class GroupsService {
                 //문자열 타입 체크
                 stringColumns.forEach(column => {
                     if (member[column] && typeof member[column] !== "string") {
-                        errorColumns.push(
-                            `${index + 2}행-${allColumns.find(col => col[column])[column]} 오류: 문자열로 입력해주세요.`,
-                        );
+                        errorColumns.push(`${index + 2}행-${allColumns.find(col => col[column])[column]} 오류: 문자열로 입력해주세요.`);
                         hasError = true;
                     }
                 });
