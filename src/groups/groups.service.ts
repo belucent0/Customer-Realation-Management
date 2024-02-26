@@ -75,6 +75,7 @@ export class GroupsService {
             if (!memberRole || (memberRole.role !== "admin" && memberRole.role !== "owner")) {
                 throw new BadRequestException("권한이 없습니다.");
             }
+
             const oneGroup = await this.groupsRepository.getMyOneGroup(groupId);
 
             if (!oneGroup) {
@@ -91,17 +92,15 @@ export class GroupsService {
     }
 
     //멤버 개별 등록
-    async addOneMember(groupId: number, createMemberDto: CreateMemberDto) {
+    async addOneMember(userId: number, createMemberDto: CreateMemberDto) {
         try {
-            const isExist = await this.prisma.member.findMany({
-                where: {
-                    OR: [
-                        { groupId, memberNumber: createMemberDto.memberNumber },
-                        { groupId, phone: createMemberDto.phone },
-                        { groupId, email: createMemberDto.email },
-                    ],
-                },
-            });
+            const memberRole = await this.groupsRepository.findMembersRole(userId, createMemberDto.groupId);
+
+            if (!memberRole || (memberRole.role !== "admin" && memberRole.role !== "owner")) {
+                throw new BadRequestException("권한이 없습니다.");
+            }
+
+            const isExist = await this.groupsRepository.findMembers(createMemberDto);
 
             const error = [];
             isExist.forEach(element => {
@@ -119,22 +118,8 @@ export class GroupsService {
             if (error.length > 0) {
                 throw new BadRequestException(`${error.join(", ")}의 값을 확인해주세요. 이미 동일한 값을 가진 멤버가 존재합니다.`);
             }
-            const newMember = await this.prisma.member.create({
-                data: {
-                    groupId: groupId,
-                    userName: createMemberDto.userName,
-                    memberNumber: createMemberDto.memberNumber,
 
-                    phone: createMemberDto.phone,
-                    email: createMemberDto.email,
-                    postalCode: createMemberDto.postalCode || "00000",
-                    address1: createMemberDto.address1,
-                    address2: createMemberDto.address2 || "",
-                    role: "member",
-                },
-            });
-
-            return newMember;
+            return await this.groupsRepository.addOneMember(createMemberDto);
         } catch (error) {
             console.error(error);
             if (error instanceof BadRequestException) {
@@ -147,33 +132,13 @@ export class GroupsService {
     //멤버 목록 조회
     async findAllMembers(page: number, take: number, userId: number, groupId: number) {
         try {
-            const isExist = await this.prisma.member.findFirst({
-                where: { groupId, userId },
-            });
+            const memberRole = await this.groupsRepository.findMembersRole(userId, groupId);
 
-            if (!isExist) {
-                throw new BadRequestException("해당 그룹에 속해있지 않습니다.");
+            if (!memberRole || (memberRole.role !== "admin" && memberRole.role !== "owner")) {
+                throw new BadRequestException("권한이 없습니다.");
             }
 
-            // role이 owner 혹은 admin인 멤버가 아니면 에러
-            if (isExist.role !== "owner" && isExist.role !== "admin") {
-                throw new BadRequestException("멤버 목록 조회 권한이 없습니다.");
-            }
-
-            const [members, total] = await Promise.all([
-                await this.prisma.member.findMany({
-                    where: { groupId },
-                    take,
-                    skip: (page - 1) * take,
-                    orderBy: [{ userName: "asc" }, { createdAt: "asc" }],
-                }),
-                this.prisma.member.count({
-                    where: { groupId },
-                }),
-            ]);
-            const lastPage = Math.ceil(total / take);
-
-            return { total, currentPage: page, lastPage, members };
+            return await this.groupsRepository.getAllmembers(page, take, groupId);
         } catch (error) {
             console.error(error);
             if (error instanceof BadRequestException) {
@@ -184,14 +149,12 @@ export class GroupsService {
     }
 
     // 멤버 정보 업로드 - 엑셀 파싱 및 컬럼명 확인
-    async uploadBulkMembers(groupId: number, file: Express.Multer.File) {
+    async uploadBulkMembers(userId: number, groupId: number, file: Express.Multer.File) {
         try {
-            const group = await this.prisma.group.findUnique({
-                where: { id: groupId },
-            });
+            const memberRole = await this.groupsRepository.findMembersRole(userId, groupId);
 
-            if (!group) {
-                throw new BadRequestException("존재하지 않는 그룹입니다.");
+            if (!memberRole || (memberRole.role !== "admin" && memberRole.role !== "owner")) {
+                throw new BadRequestException("권한이 없습니다.");
             }
 
             if (!file) {
@@ -267,7 +230,13 @@ export class GroupsService {
     }
 
     // 멤버 정보 일괄 업로드 - 멤버 정보 유효성 검사
-    async validateBulkMembers(groupId: number, newMembers: MemberData[]) {
+    async validateBulkMembers(userId: number, groupId: number, newMembers: MemberData[]) {
+        const memberRole = await this.groupsRepository.findMembersRole(userId, groupId);
+
+        if (!memberRole || (memberRole.role !== "admin" && memberRole.role !== "owner")) {
+            throw new BadRequestException("권한이 없습니다.");
+        }
+
         console.log(newMembers[0].joinedAt, "newMembers");
         const allColumns = [
             { memberNumber: "회원고유번호" },
@@ -288,46 +257,26 @@ export class GroupsService {
         const errorColumns = [];
 
         try {
+            // DB 중복 체크 - 회원고유번호, 연락처, 이메일
             const duplicatedMemberNumbers = (
-                await this.prisma.member.findMany({
-                    where: {
-                        groupId,
-                        memberNumber: {
-                            in: newMembers.map(member => member.memberNumber),
-                        },
-                    },
-                    select: {
-                        memberNumber: true,
-                    },
-                })
+                await this.groupsRepository.findDuplicateMemberNumbers(
+                    groupId,
+                    newMembers.map(member => member.memberNumber),
+                )
             ).map(member => member.memberNumber);
 
             const duplicatedPhoneNumbers = (
-                await this.prisma.member.findMany({
-                    where: {
-                        groupId,
-                        phone: {
-                            in: newMembers.map(member => member.phone),
-                        },
-                    },
-                    select: {
-                        phone: true,
-                    },
-                })
+                await this.groupsRepository.findDuplicatePhones(
+                    groupId,
+                    newMembers.map(member => member.phone),
+                )
             ).map(member => member.phone);
 
             const duplicatedEmails = (
-                await this.prisma.member.findMany({
-                    where: {
-                        groupId,
-                        email: {
-                            in: newMembers.map(member => member.email),
-                        },
-                    },
-                    select: {
-                        email: true,
-                    },
-                })
+                await this.groupsRepository.findDuplicateEmails(
+                    groupId,
+                    newMembers.map(member => member.email),
+                )
             ).map(member => member.email);
 
             for (const [index, member] of newMembers.entries()) {
@@ -474,22 +423,13 @@ export class GroupsService {
                 status: member.status || "active",
             }));
 
-            await this.prisma.tempMember.createMany({
-                data: membersData,
-            });
+            // 임시 테이블에 멤버 정보 저장
+            await this.groupsRepository.tempSaveBulkMembers(membersData);
 
-            const tempIds = (
-                await this.prisma.tempMember.findMany({
-                    where: {
-                        memberNumber: {
-                            in: membersData.map(member => member.memberNumber),
-                        },
-                    },
-                    select: {
-                        id: true,
-                    },
-                })
-            ).map(member => member.id);
+            // 임시 테이블에 저장된 멤버 정보 id 조회
+            const tempIds = (await this.groupsRepository.findTempBulkMembers(membersData.map(member => member.memberNumber))).map(
+                member => member.id,
+            );
 
             return tempIds;
         } catch (error) {
@@ -502,43 +442,17 @@ export class GroupsService {
     async registerBulkMembers(groupId: number, tempIds: number[]) {
         try {
             console.log(tempIds, "tempIds");
-            const tempMembers = await this.prisma.tempMember.findMany({
-                where: {
-                    id: {
-                        in: tempIds,
-                    },
-                },
-            });
+            const tempMembers = await this.groupsRepository.findTempMembers(tempIds);
 
             console.log(tempMembers, "tempMembers");
 
             const newMembers = tempMembers.map(member => ({
+                ...member,
                 groupId: groupId,
-                memberNumber: member.memberNumber,
-                userName: member.userName,
-                joinedAt: member.joinedAt,
-                grade: member.grade,
-                phone: member.phone,
-                email: member.email,
-                postalCode: member.postalCode,
-                address1: member.address1,
-                address2: member.address2,
-                status: member.status,
             }));
 
-            await this.prisma.member.createMany({
-                data: newMembers,
-            });
-
-            await this.prisma.tempMember.deleteMany({
-                where: {
-                    id: {
-                        in: tempIds,
-                    },
-                },
-            });
-
-            return newMembers;
+            // 실제 멤버 정보 등록
+            return this.groupsRepository.registerBulkMembers(newMembers, tempIds);
         } catch (error) {
             console.error(error);
             throw new InternalServerErrorException("멤버 등록에 실패했습니다.");

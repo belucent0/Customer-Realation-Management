@@ -88,8 +88,8 @@ export class GroupsController {
     @UseGuards(AuthGuard())
     @HttpCode(HttpStatus.CREATED)
     @ResMessage("멤버 등록 성공!")
-    addOneMember(@Param("groupId", ParseIntPipe) groupId: number, @Body() createMemberDto: CreateMemberDto) {
-        return this.groupsService.addOneMember(groupId, createMemberDto);
+    addOneMember(@Req() req, @Body() createMemberDto: CreateMemberDto) {
+        return this.groupsService.addOneMember(req.user.id, createMemberDto);
     }
 
     // 멤버 정보 일괄 업로드
@@ -98,10 +98,10 @@ export class GroupsController {
     @UseInterceptors(FileInterceptor("file"))
     @HttpCode(HttpStatus.CREATED)
     @ResMessage("멤버 일괄 업로드 성공!")
-    async uploadBulkMembers(@Param("groupId", ParseIntPipe) groupId: number, @UploadedFile() file: Express.Multer.File) {
+    async uploadBulkMembers(@Req() req, @Param("groupId", ParseIntPipe) groupId: number, @UploadedFile() file: Express.Multer.File) {
         // const fileName = await this.fileUploadService.uploadFile(file);
-        const newMember = await this.groupsService.uploadBulkMembers(groupId, file);
-        return await this.groupsService.validateBulkMembers(groupId, newMember);
+        const newMember = await this.groupsService.uploadBulkMembers(req.user.id, groupId, file);
+        return await this.groupsService.validateBulkMembers(req.user.id, groupId, newMember);
     }
 
     // 멤버 정보 일괄 등록

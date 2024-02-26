@@ -1,4 +1,5 @@
-import { IsEmail, IsNotEmpty, IsOptional, IsString, Length } from "class-validator";
+import { Transform } from "class-transformer";
+import { IsEmail, IsInt, IsNotEmpty, IsOptional, IsString, Length } from "class-validator";
 
 export class CreateGroupDto {
     @IsNotEmpty({ message: "그룹명을 입력해주세요." })
@@ -8,6 +9,12 @@ export class CreateGroupDto {
 }
 
 export class CreateMemberDto {
+    @IsInt()
+    @Transform(({ value }) => {
+        return Number(value);
+    })
+    groupId: number;
+
     @IsNotEmpty({ message: "회원번호를 입력해주세요." })
     @Length(1, 30, { message: "회원번호는 $constraint1자에서 $constraint2자 사이로 입력해주세요." })
     memberNumber: string;
@@ -50,14 +57,15 @@ export class CreateMemberDto {
 }
 
 export class MemberData {
+    groupId: number;
     memberNumber: string;
     userName: string;
-    joinedAt?: string;
+    joinedAt?: Date;
     grade?: string;
     phone: string;
     email: string;
     postalCode?: string;
     address1?: string;
     address2?: string;
-    status?;
+    status?: string;
 }
