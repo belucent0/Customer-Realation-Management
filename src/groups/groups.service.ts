@@ -1,7 +1,5 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from "@nestjs/common";
 import { CreateGroupDto, CreateMemberDto, MemberData } from "./dto/create-group.dto";
-import { UpdateGroupDto } from "./dto/update-group.dto";
-import { PrismaService } from "src/prisma.service";
 import * as XLSX from "xlsx";
 import * as dayjs from "dayjs";
 import { GroupsRepository } from "./groups.repository";
@@ -9,10 +7,7 @@ import { Group } from "@prisma/client";
 
 @Injectable()
 export class GroupsService {
-    constructor(
-        private readonly prisma: PrismaService,
-        private readonly groupsRepository: GroupsRepository,
-    ) {}
+    constructor(private readonly groupsRepository: GroupsRepository) {}
 
     //그룹 생성
     async createGroup(userId: number, createGroupDto: CreateGroupDto) {

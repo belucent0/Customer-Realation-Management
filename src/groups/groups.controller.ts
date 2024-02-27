@@ -3,9 +3,7 @@ import {
     Get,
     Post,
     Body,
-    Patch,
     Param,
-    Delete,
     ParseIntPipe,
     ValidationPipe,
     HttpCode,
@@ -19,7 +17,6 @@ import {
 } from "@nestjs/common";
 import { GroupsService } from "./groups.service";
 import { CreateGroupDto, CreateMemberDto } from "./dto/create-group.dto";
-import { UpdateGroupDto } from "./dto/update-group.dto";
 import { Group } from "@prisma/client";
 import { ResMessage } from "src/utils/response-message.decorator";
 import { AuthGuard } from "@nestjs/passport";

@@ -1,26 +1,16 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from "@nestjs/common";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
-import { PrismaService } from "src/prisma.service";
-import { User } from "@prisma/client";
 import * as bcrypt from "bcrypt";
+import { UsersRepository } from "./users.repository";
 
 @Injectable()
 export class UsersService {
-    constructor(private prisma: PrismaService) {}
+    constructor(private readonly usersRepository: UsersRepository) {}
 
-    async createUser(createUserDto: CreateUserDto): Promise<User> {
+    async createUser(createUserDto: CreateUserDto): Promise<{ loginId: string; userName: string }> {
         try {
-            const isExist = await this.prisma.user.findMany({
-                where: {
-                    OR: [
-                        { loginId: createUserDto.loginId },
-                        { userName: createUserDto.userName },
-                        { email: createUserDto.email },
-                        { phone: createUserDto.phone },
-                    ],
-                },
-            });
+            const isExist = await this.usersRepository.findUsersInformation(createUserDto);
 
             // 만약 동일한 값이 존재한다면, isExist의 요소들을 error에 push
             const error = [];
@@ -45,21 +35,9 @@ export class UsersService {
 
             if (isExist.length === 0) {
                 const salt = bcrypt.genSaltSync(10);
-                const hashedPassword = await bcrypt.hash(createUserDto.password, salt);
+                createUserDto.password = await bcrypt.hash(createUserDto.password, salt);
 
-                const newUser = await this.prisma.user.create({
-                    data: {
-                        loginId: createUserDto.loginId,
-                        password: hashedPassword,
-                        userName: createUserDto.userName,
-                        email: createUserDto.email,
-                        phone: createUserDto.phone,
-                    },
-                });
-
-                newUser.password = undefined;
-
-                return newUser;
+                return await this.usersRepository.createUser(createUserDto);
             }
         } catch (error) {
             console.error(error);
