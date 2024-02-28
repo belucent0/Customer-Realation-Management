@@ -1,6 +1,12 @@
 import { Controller, Get, Post, Body, Req, Query, UseGuards, HttpCode, HttpStatus } from "@nestjs/common";
 import { QualificationService } from "./qualification.service";
-import { AcquireQualificationDto, AddAttendeesDto, CreateOneActivityDto, CreateQualificationDto } from "./dto/create-qualification.dto";
+import {
+    AcquireQualificationDto,
+    AddAttendeesDto,
+    CreateOneActivityDto,
+    CreateQualificationDto,
+    RenewalCertificateDto,
+} from "./dto/create-qualification.dto";
 import { FindAllActivityDto, FindOneActivityDto } from "./dto/find-qualification.dto";
 import { ResMessage } from "src/utils/response-message.decorator";
 import { AuthGuard } from "@nestjs/passport";
@@ -25,6 +31,24 @@ export class QualificationController {
     @ResMessage("자격취득 내역 생성 성공!")
     acquireQualification(@Req() req, @Body() acquireQualificationDto: AcquireQualificationDto) {
         return this.qualificationService.acquireQualification(req.user.id, acquireQualificationDto);
+    }
+
+    // 자격 갱신 내역 생성
+    @Post("renewal")
+    @UseGuards(AuthGuard())
+    @HttpCode(HttpStatus.CREATED)
+    @ResMessage("자격 갱신 성공!")
+    renewalCertificate(@Req() req, @Body() renewalCertificateDto: RenewalCertificateDto) {
+        return this.qualificationService.renewalCertificate(req.user.id, renewalCertificateDto);
+    }
+
+    // 자격 갱신 내역 조회
+    @Get("renewal")
+    @UseGuards(AuthGuard())
+    @HttpCode(HttpStatus.OK)
+    @ResMessage("자격 갱신 내역 조회 성공!")
+    findRenewal(@Req() req, @Query("acquisitionId") acquisitionId: number) {
+        return this.qualificationService.findRenewal(req.user.id, acquisitionId);
     }
 
     // 행사 등록

@@ -3,15 +3,15 @@ import { PrismaService } from "src/prisma.service";
 import * as dayjs from "dayjs";
 import { FindAllActivityDto } from "./dto/find-qualification.dto";
 import { PaginatedResult } from "src/utils/paginator";
-import { Activity } from "@prisma/client";
-import { CreateOneActivityDto, CreateQualificationDto, AcquireQualificationDto } from "./dto/create-qualification.dto";
+import { Acquisition, Activity, Qualification, Renewal } from "@prisma/client";
+import { CreateOneActivityDto, CreateQualificationDto, AcquireQualificationDto, RenewalCertificateDto } from "./dto/create-qualification.dto";
 
 @Injectable()
 export class QualificationRepository {
     constructor(private readonly prisma: PrismaService) {}
 
     // 자격 등록
-    async createQualification({ groupId, title, renewalCycle }: CreateQualificationDto) {
+    async createQualification({ groupId, title, renewalCycle }: CreateQualificationDto): Promise<Qualification> {
         return await this.prisma.qualification.create({
             data: {
                 groupId,
@@ -22,19 +22,38 @@ export class QualificationRepository {
     }
 
     // 자격 취득 내역 생성
-    async acquireQualification({ memberId, qualificationId, acquiredAt, expiredAt }: AcquireQualificationDto) {
+    async acquireQualification({ memberId, qualificationId, acquiredAt }: AcquireQualificationDto): Promise<Acquisition> {
         return await this.prisma.acquisition.create({
             data: {
                 memberId,
                 qualificationId,
                 acquiredAt: dayjs(acquiredAt).toDate(),
+            },
+        });
+    }
+
+    // 자격 갱신 내역 생성
+    async renewalCertificate({ acquisitionId, renewalAt, expiredAt }: RenewalCertificateDto): Promise<Renewal> {
+        return await this.prisma.renewal.create({
+            data: {
+                acquisitionId,
+                renewalAt: dayjs(renewalAt).toDate(),
                 expiredAt: dayjs(expiredAt).toDate(),
             },
         });
     }
 
+    // 자격 갱신 내역 조회
+    async findRenewal(acquisitionId: number): Promise<Renewal[]> {
+        return await this.prisma.renewal.findMany({
+            where: {
+                acquisitionId,
+            },
+        });
+    }
+
     // 행사 등록
-    async createOneActivity({ groupId, category, title, detail, place, meetingAt }: CreateOneActivityDto) {
+    async createOneActivity({ groupId, category, title, detail, place, meetingAt }: CreateOneActivityDto): Promise<Activity> {
         return await this.prisma.activity.create({
             data: {
                 groupId,

@@ -33,9 +33,15 @@ export class AcquireQualificationDto {
     qualificationId: number;
 
     acquiredAt: Date;
-    expiredAt: Date;
 
     status: string;
+}
+
+export class RenewalCertificateDto {
+    groupId: number;
+    acquisitionId: number;
+    renewalAt: Date;
+    expiredAt: Date;
 }
 
 export class CreateOneActivityDto {

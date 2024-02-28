@@ -1,9 +1,15 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
-import { AcquireQualificationDto, AddAttendeesDto, CreateOneActivityDto, CreateQualificationDto } from "./dto/create-qualification.dto";
+import {
+    AcquireQualificationDto,
+    AddAttendeesDto,
+    CreateOneActivityDto,
+    CreateQualificationDto,
+    RenewalCertificateDto,
+} from "./dto/create-qualification.dto";
 import { QualificationRepository } from "./qualification.repository";
 import { FindAllActivityDto, FindOneActivityDto } from "./dto/find-qualification.dto";
 import { PaginatedResult } from "src/utils/paginator";
-import { Activity, Attendee } from "@prisma/client";
+import { Acquisition, Activity, Attendee, Renewal } from "@prisma/client";
 import { GroupsRepository } from "src/groups/groups.repository";
 
 @Injectable()
@@ -45,6 +51,37 @@ export class QualificationService {
         }
     }
 
+    // 자격 갱신 내역 생성
+    async renewalCertificate(userId: number, renewalCertificateDto: RenewalCertificateDto) {
+        try {
+            const memberRole = await this.groupsRepository.findMembersRole(userId, renewalCertificateDto.groupId);
+
+            if (!memberRole || (memberRole.role !== "admin" && memberRole.role !== "owner")) {
+                throw new BadRequestException("권한이 없습니다.");
+            }
+
+            return await this.qualificationRepository.renewalCertificate(renewalCertificateDto);
+        } catch (error) {
+            console.error(error);
+            throw new Error("renewalCertificate error");
+        }
+    }
+
+    // 자격 갱신 내역 조회
+    async findRenewal(userId: number, acquisitionId: number): Promise<Renewal[]> {
+        try {
+            const memberRole = await this.groupsRepository.findMembersRole(userId, acquisitionId);
+
+            if (!memberRole || (memberRole.role !== "admin" && memberRole.role !== "owner")) {
+                throw new BadRequestException("권한이 없습니다.");
+            }
+
+            return await this.qualificationRepository.findRenewal(acquisitionId);
+        } catch (error) {
+            console.error(error);
+            throw new Error("findRenewal error");
+        }
+    }
     // 행사 등록
     async createOneActivity(userId: number, createOneActivityDto: CreateOneActivityDto) {
         try {

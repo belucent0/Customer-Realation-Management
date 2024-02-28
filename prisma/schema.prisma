@@ -101,10 +101,10 @@ model Acquisition {
   memberId        Int
   qualificationId Int
   acquiredAt      DateTime      @db.Timestamp(0)
-  expiredAt       DateTime      @db.Timestamp(0)
   Member          Member        @relation(fields: [memberId], references: [id])
   Qualification   Qualification @relation(fields: [qualificationId], references: [id])
   status          String        @default("active")
+  Renewal         Renewal[]
 }
 
 // 자격 요건
@@ -121,16 +121,15 @@ model Requirement {
 
 // 자격 갱신
 model Renewal {
-  id        Int      @id @default(autoincrement())
-  MemberId  Int
-  groupId   Int
-  nextDate  DateTime @db.Timestamp(0)
-  createdAt DateTime @default(now())
-  Member    Member   @relation(fields: [MemberId], references: [id])
-  Group     Group    @relation(fields: [groupId], references: [id])
-
-  @@index([MemberId], map: "Renewal_MemberId_fkey")
-  @@index([groupId], map: "Renewal_groupId_fkey")
+  id            Int         @id @default(autoincrement())
+  acquisitionId Int
+  renewalAt     DateTime    @db.Timestamp(0)
+  expiredAt     DateTime    @db.Timestamp(0)
+  Acquisition   Acquisition @relation(fields: [acquisitionId], references: [id])
+  Group         Group?      @relation(fields: [groupId], references: [id])
+  groupId       Int?
+  Member        Member?     @relation(fields: [memberId], references: [id])
+  memberId      Int?
 }
 
 // 활동 내역
