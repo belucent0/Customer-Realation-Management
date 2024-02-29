@@ -83,7 +83,7 @@ export class QualificationController {
     @UseGuards(AuthGuard())
     @HttpCode(HttpStatus.CREATED)
     @ResMessage("참석자 일괄 추가 성공!")
-    addAttendees(@Req() req, @Body() addAttendeesDto: AddAttendeesDto) {
+    addAttendees(@Req() req, @Body() addAttendeesDto: AddAttendeesDto): Promise<{ count: number }> {
         return this.qualificationService.addAttendees(req.user.id, addAttendeesDto);
     }
 }
