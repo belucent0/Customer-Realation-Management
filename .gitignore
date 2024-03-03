@@ -1,6 +1,6 @@
 # compiled output
-/dist
-/node_modules
+dist
+node_modules
 
 # Logs
 logs
@@ -43,3 +43,6 @@ lerna-debug.log*
 
 # Test 
 test
+
+.turbo
+.vscode

@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-export default function Home() {
+export default function mainPPAGE() {
     return (
         <div className="flex flex-col min-h-[100dvh]">
             <header className="px-4 lg:px-6 h-14 flex items-center">
@@ -24,7 +24,7 @@ export default function Home() {
                     <Link className="text-sm font-medium hover:underline underline-offset-4" href="#">
                         About
                     </Link>
-                    <Link href="/login" className="text-sm font-medium hover:underline underline-offset-4">
+                    <Link className="text-sm font-medium hover:underline underline-offset-4" href="#">
                         Login
                     </Link>
                 </nav>
@@ -85,11 +85,10 @@ export default function Home() {
                     <div className="container grid items-center gap-6 px-4 text-center md:px-6">
                         <div className="space-y-3">
                             <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">
-                                편리한 그룹 관리 기능을 즉시 사용할 수 있습니다.
+                                Experience the workflow the best frontend teams love.
                             </h2>
                             <p className="mx-auto max-w-[600px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
-                                여러분의 서비스에 맞게 커스터마이징된 그룹 관리 기능을 경험해보세요. 고객관리를 위한 대시보드와 알림 기능을
-                                제공합니다.
+                                Let your team focus on shipping features instead of managing infrastructure with automated CI/CD.
                             </p>
                         </div>
                         <div className="mx-auto w-full max-w-sm space-y-2">
