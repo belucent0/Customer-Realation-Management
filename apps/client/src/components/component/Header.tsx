@@ -15,11 +15,11 @@ export const Header = () => {
                     <Link className="text-sm font-medium hover:underline underline-offset-4" href="#">
                         Pricing
                     </Link>
-                    <Link className="text-sm font-medium hover:underline underline-offset-4" href="#">
-                        회원가입
-                    </Link>
                     <Link href="/signin" className="text-sm font-medium hover:underline underline-offset-4">
                         로그인
+                    </Link>
+                    <Link className="text-sm font-medium hover:underline underline-offset-4" href="#">
+                        회원가입
                     </Link>
                 </nav>
             </header>

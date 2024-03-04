@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsPhoneNumber, IsString, Length } from "class-validator";
+import { IsEmail, IsNotEmpty, IsPhoneNumber, IsString, Length, Matches } from "class-validator";
 
 export class CreateUserDto {
     @IsNotEmpty({ message: "아이디를 입력해주세요." })
@@ -8,7 +8,10 @@ export class CreateUserDto {
 
     @IsNotEmpty({ message: "비밀번호를 입력해주세요." })
     @IsString()
-    @Length(6, 20, { message: "비밀번호는 $constraint1자 이상 $constraint2자 이하로 입력해주세요." })
+    @Length(8, 15, { message: "비밀번호는 $constraint1자 이상 $constraint2자 이하로 입력해주세요." })
+    @Matches(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,15}$/, {
+        message: "비밀번호는 영문, 숫자, 특수문자를 모두 포함하여 입력해주세요.",
+    })
     password: string;
 
     @IsNotEmpty({ message: "이름을 입력해주세요." })
