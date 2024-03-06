@@ -29,7 +29,7 @@ export class UsersService {
             });
 
             if (error.length > 0) {
-                throw new BadRequestException(`${error.join(", ")}의 값을 변경해주세요. 이미 동일한 값을 사용 중입니다.`);
+                throw new BadRequestException(`${error.join(", ")}의 값을 변경해주세요. 이미 누군가 등록한 정보입니다.`);
             }
 
             if (isExist.length === 0) {

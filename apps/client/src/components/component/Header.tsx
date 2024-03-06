@@ -18,7 +18,7 @@ export const Header = () => {
                     <Link href="/signin" className="text-sm font-medium hover:underline underline-offset-4">
                         로그인
                     </Link>
-                    <Link className="text-sm font-medium hover:underline underline-offset-4" href="#">
+                    <Link href="/signup" className="text-sm font-medium hover:underline underline-offset-4">
                         회원가입
                     </Link>
                 </nav>

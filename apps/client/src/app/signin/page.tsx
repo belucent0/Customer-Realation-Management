@@ -11,7 +11,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function SignIn() {
+export default function signInPage() {
     const [loginId, setLoginId] = useState("");
     const [password, setPassword] = useState("");
 
