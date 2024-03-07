@@ -8,19 +8,24 @@ export const Header = () => {
                     <MountainIcon className="h-6 w-6" />
                     <span className="sr-only">Acme Inc</span>
                 </Link>
-                <nav className="ml-auto flex gap-4 sm:gap-6">
-                    <Link className="text-sm font-medium hover:underline underline-offset-4" href="#">
-                        Features
-                    </Link>
-                    <Link className="text-sm font-medium hover:underline underline-offset-4" href="#">
-                        Pricing
-                    </Link>
-                    <Link href="/signin" className="text-sm font-medium hover:underline underline-offset-4">
-                        로그인
-                    </Link>
-                    <Link href="/signup" className="text-sm font-medium hover:underline underline-offset-4">
-                        회원가입
-                    </Link>
+                <nav className="flex justify-between w-full px-2 sm:gap-6">
+                    <div className="flex gap-4 px-10 sm:gap-6">
+                        <Link className="text-sm font-medium hover:underline underline-offset-4" href="#">
+                            Features
+                        </Link>
+                        <Link className="text-sm font-medium hover:underline underline-offset-4" href="#">
+                            Pricing
+                        </Link>
+                    </div>
+
+                    <div className="flex gap-4 sm:gap-6 ml-10">
+                        <Link href="/signin" className="text-sm font-medium hover:underline underline-offset-4">
+                            로그인
+                        </Link>
+                        <Link href="/signup" className="text-sm font-medium hover:underline underline-offset-4">
+                            회원가입
+                        </Link>
+                    </div>
                 </nav>
             </header>
         </>
