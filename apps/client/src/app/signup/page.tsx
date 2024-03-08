@@ -58,8 +58,8 @@ export default function signupPage() {
 
     return (
         <>
-            <Card>
-                <CardContainer>
+            <Card className="w-[450px]">
+                <CardContainer className="w-[400px]">
                     <CardHeader>
                         <CardTitle className="text-2xl">회원가입</CardTitle>
                         <CardDescription>서비스 사용을 위해 회원 정보를 입력하세요.</CardDescription>

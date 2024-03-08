@@ -41,7 +41,7 @@ export default function signInPage() {
     };
 
     return (
-        <Card>
+        <Card className="w-[450px]">
             <CardContainer>
                 <CardHeader>
                     <CardTitle className="text-2xl">로그인</CardTitle>
