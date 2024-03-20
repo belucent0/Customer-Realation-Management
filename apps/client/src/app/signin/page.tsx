@@ -7,37 +7,51 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useState, SyntheticEvent } from "react";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 
 export default function signInPage() {
     const [loginId, setLoginId] = useState("");
     const [password, setPassword] = useState("");
 
-    const serverURL = process.env.NEXT_PUBLIC_SERVER_URL;
     const router = useRouter();
 
     const handleSubmit = async (event: SyntheticEvent) => {
         console.log("로그인 시도");
         event.preventDefault();
 
-        const response = await fetch(`${serverURL}/api/auth/login`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            credentials: "include",
-            body: JSON.stringify({ loginId, password }),
+        const res = await signIn("credentials", {
+            loginId,
+            password,
+            redirect: false,
         });
 
-        const result = await response.json();
-        if (response.ok) {
-            console.log("로그인 성공");
-            console.log(result.data);
-            alert("로그인 성공");
-            router.push("/");
-        } else {
-            console.log("로그인 실패");
-            alert(result.message);
+        console.log(res, "res===========================");
+        if (res?.error) {
+            alert(res.error);
         }
+
+        if (res?.ok) {
+            router.push("/");
+        }
+        // const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
+        //     method: "POST",
+        //     headers: {
+        //         "Content-Type": "application/json",
+        //     },
+        //     credentials: "include",
+        //     body: JSON.stringify({ loginId, password }),
+        // });
+
+        // const result = await response.json();
+        // if (response.ok) {
+        //     console.log("로그인 성공");
+        //     console.log(result.data);
+        //     alert("로그인 성공");
+        //     router.push("/");
+        // } else {
+        //     console.log("로그인 실패");
+        //     alert(result.message);
+        // }
     };
 
     return (

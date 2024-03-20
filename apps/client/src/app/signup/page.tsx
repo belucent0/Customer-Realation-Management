@@ -19,8 +19,6 @@ export default function signupPage() {
 
     const router = useRouter();
 
-    const serverURL = process.env.NEXT_PUBLIC_SERVER_URL;
-
     const handleSubmit = async (event: SyntheticEvent) => {
         event.preventDefault();
 
@@ -32,7 +30,8 @@ export default function signupPage() {
         try {
             console.log("회원가입 시도");
 
-            const response = await fetch(`${serverURL}/api/users`, {
+            console.log(loginId, password, userName, phone, email, "회원가입 시도");
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -42,17 +41,23 @@ export default function signupPage() {
 
             const result = await response.json();
 
-            if (response.ok) {
+            console.log(result, "result===========================");
+            if (result.status === "success") {
                 console.log(result.data);
                 alert(result.message);
                 router.push("/signin");
-            } else {
-                console.log(result);
+            }
+
+            if (result.statusCode === 400) {
                 alert(result.message);
             }
-        } catch (error) {
+
+            if (result.statusCode === 500) {
+                alert("서버 요청에 실패했습니다. 다시 시도해주세요.");
+            }
+        } catch (error: any | Error) {
             console.error(error);
-            alert("회원가입에 실패했습니다.");
+            alert(error.message);
         }
     };
 

@@ -19,10 +19,11 @@ export class ResponseTransformInterceptor<T> implements NestInterceptor<T, Respo
         const messageFromMetaData = this.reflector.get<string>("response-message", context.getHandler());
         return next.handle().pipe(
             map(item => ({
+                status: "success",
                 statusCode: currentStatusCode,
                 message: messageFromMetaData || item.message || "",
-                meta: item.meta || false,
-                data: item.data || item,
+                meta: item?.meta || false,
+                data: item?.data || item,
             })),
         );
     }

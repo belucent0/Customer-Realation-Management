@@ -10,6 +10,7 @@ import {
 import { Payment, columns } from "./columns";
 import { DataTable } from "./data-table";
 import { Card, CardContent } from "@/components/ui/card";
+import { getToken } from "next-auth/jwt";
 
 async function getData(): Promise<Payment[]> {
     // Fetch data from your API here.
@@ -84,14 +85,12 @@ async function getData(): Promise<Payment[]> {
 }
 
 export default async function DemoPage() {
-    // const data = await getData();
-
-    const serverURL = process.env.NEXT_PUBLIC_SERVER_URL;
-    const response = await fetch(`${serverURL}/api/groups`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/groups`, {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
         },
+        credentials: "include",
     });
 
     const data = await response.json();

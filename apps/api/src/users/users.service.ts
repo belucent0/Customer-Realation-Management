@@ -17,9 +17,6 @@ export class UsersService {
                 if (element.loginId === createUserDto.loginId) {
                     error.push("아이디");
                 }
-                if (element.userName === createUserDto.userName) {
-                    error.push("이름");
-                }
                 if (element.email === createUserDto.email) {
                     error.push("이메일");
                 }
