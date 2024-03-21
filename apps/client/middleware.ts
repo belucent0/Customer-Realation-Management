@@ -5,18 +5,25 @@ import type { NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
     const session = request.cookies.get("next-auth.session-token");
 
+    // 세션 있을 때
+    if (session) {
+        if (request.nextUrl.pathname.startsWith("/signin")) {
+            return NextResponse.redirect(new URL("/", request.url));
+        }
+
+        if (request.nextUrl.pathname.startsWith("/signup")) {
+            return NextResponse.redirect(new URL("/", request.url));
+        }
+
+        return NextResponse.next();
+    }
+
+    // 세션 없을 때
     if (request.nextUrl.pathname.startsWith("/signin")) {
-        console.log("signin");
-        return NextResponse.rewrite(new URL("/", request.url));
+        return NextResponse.next();
     }
 
     if (request.nextUrl.pathname.startsWith("/signup")) {
-        console.log("signin");
-        return NextResponse.rewrite(new URL("/", request.url));
-    }
-
-    if (session) {
-        console.log("session");
         return NextResponse.next();
     }
 

@@ -30,7 +30,7 @@ export default function signInPage() {
         }
 
         if (res?.ok) {
-            router.push("/");
+            router.refresh();
         }
         // const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
         //     method: "POST",

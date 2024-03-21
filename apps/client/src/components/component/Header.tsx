@@ -1,10 +1,14 @@
-import { Session, getServerSession } from "next-auth";
+"use client";
+
+import { Session } from "next-auth";
 import Link from "next/link";
-import { authOptions } from "../../../pages/api/auth/[...nextauth]";
+import { signOut } from "next-auth/react";
 
-export const Header = async () => {
-    const session: Session | null = await getServerSession(authOptions);
+type props = {
+    session: Session | null;
+};
 
+export const Header = ({ session }: props) => {
     const jwt = session?.accessToken;
 
     return (
@@ -26,13 +30,18 @@ export const Header = async () => {
 
                     <div className="flex gap-4 sm:gap-6 ml-10">
                         {jwt ? (
-                            <Link href="" className="text-sm font-medium hover:underline underline-offset-4">
+                            <button
+                                onClick={() => {
+                                    signOut();
+                                }}
+                                className="text-sm font-medium hover:underline underline-offset-4"
+                            >
                                 로그아웃
-                            </Link>
+                            </button>
                         ) : (
-                            <Link href="/signin" className="text-sm font-medium hover:underline underline-offset-4">
+                            <a href="/signin" className="text-sm font-medium hover:underline underline-offset-4">
                                 로그인
-                            </Link>
+                            </a>
                         )}
                         {jwt ? (
                             <Link href="/mypage" className="text-sm font-medium hover:underline underline-offset-4">

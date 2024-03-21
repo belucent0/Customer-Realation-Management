@@ -103,6 +103,15 @@ export const authOptions: AuthOptions = {
         error: "/",
         signOut: "/",
     },
+
+    events: {
+        async signOut(message) {
+            console.log("로그아웃 성공", message);
+        },
+        async signIn(message) {
+            console.log("로그인 성공", message);
+        },
+    },
 };
 
 const authHandler = NextAuth(authOptions);
