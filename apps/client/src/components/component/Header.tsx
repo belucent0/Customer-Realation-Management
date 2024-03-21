@@ -10,10 +10,10 @@ export const Header = () => {
                 </Link>
                 <nav className="flex justify-between w-full px-2 sm:gap-6">
                     <div className="flex gap-4 px-10 sm:gap-6">
-                        <Link className="text-sm font-medium hover:underline underline-offset-4" href="/groups">
+                        <a href="/groups" className="text-sm font-medium hover:underline underline-offset-4">
                             그룹
-                        </Link>
-                        <Link className="text-sm font-medium hover:underline underline-offset-4" href="#">
+                        </a>
+                        <Link href="/groups" className="text-sm font-medium hover:underline underline-offset-4">
                             Pricing
                         </Link>
                     </div>

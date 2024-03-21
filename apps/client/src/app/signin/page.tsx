@@ -25,7 +25,6 @@ export default function signInPage() {
             redirect: false,
         });
 
-        console.log(res, "res===========================");
         if (res?.error) {
             alert(res.error);
         }
@@ -43,9 +42,16 @@ export default function signInPage() {
         // });
 
         // const result = await response.json();
+
         // if (response.ok) {
         //     console.log("로그인 성공");
         //     console.log(result.data);
+
+        //     // 토큰 조회 및 저장
+        //     const token = result.data.accessToken;
+        //     // 쿠키 저장
+        //     document.cookie = `accessToken=${token}`;
+
         //     alert("로그인 성공");
         //     router.push("/");
         // } else {

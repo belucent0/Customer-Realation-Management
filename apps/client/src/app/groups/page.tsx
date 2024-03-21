@@ -1,3 +1,5 @@
+"use client";
+
 import {
     Pagination,
     PaginationContent,
@@ -10,7 +12,8 @@ import {
 import { Payment, columns } from "./columns";
 import { DataTable } from "./data-table";
 import { Card, CardContent } from "@/components/ui/card";
-import { getToken } from "next-auth/jwt";
+import { Session, getServerSession } from "next-auth";
+import { authOptions } from "../../../pages/api/auth/[...nextauth]";
 
 async function getData(): Promise<Payment[]> {
     // Fetch data from your API here.
@@ -85,17 +88,27 @@ async function getData(): Promise<Payment[]> {
 }
 
 export default async function DemoPage() {
+    const session: Session | null = await getServerSession(authOptions);
+
+    console.log(session, "session===========================");
+    const jwt = session?.accessToken;
+
+    console.log(jwt, "jwt===========================");
+
+    if (!jwt) {
+        return <div>로그인이 필요합니다.</div>;
+    }
+
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/groups`, {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${jwt}`,
         },
-        credentials: "include",
     });
 
     const data = await response.json();
-
-    console.log(data);
+    // const data = await getData();
 
     return (
         <div className="container mx-auto py-10">

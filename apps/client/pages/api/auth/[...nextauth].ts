@@ -19,7 +19,6 @@ export const authOptions: AuthOptions = {
                 try {
                     const loginResponse = async () => {
                         try {
-                            const apiURL = process.env.NEXT_PUBLIC_API_URL;
                             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
                                 method: "POST",
                                 headers: {
@@ -52,9 +51,7 @@ export const authOptions: AuthOptions = {
                         throw new Error(result.message);
                     }
 
-                    // if (result && result.status === "success") {
-                    //     return result.data;
-                    // }
+                    return null;
                 } catch (error: any | Error) {
                     throw new Error(error.message);
                 }
@@ -74,11 +71,12 @@ export const authOptions: AuthOptions = {
         jwt: async ({ token, user }) => {
             if (user) {
                 token.user = {
-                    email: user.email,
+                    loginId: user.loginId,
                     name: user.name,
                     // image: user.image,
                     // role: user.role,
                 };
+                token.accessToken = user.accessToken;
             }
             return token;
         },
@@ -86,12 +84,13 @@ export const authOptions: AuthOptions = {
         session: async ({ session, token }) => {
             session.user = token.user as
                 | {
-                      email?: string;
+                      loginId?: string;
                       passowrd?: string;
                       //   image?: string;
                       //   role?: string;
                   }
                 | undefined;
+            session.accessToken = token.accessToken as string;
 
             return session;
         },
