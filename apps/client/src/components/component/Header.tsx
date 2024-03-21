@@ -1,6 +1,12 @@
+import { Session, getServerSession } from "next-auth";
 import Link from "next/link";
+import { authOptions } from "../../../pages/api/auth/[...nextauth]";
 
-export const Header = () => {
+export const Header = async () => {
+    const session: Session | null = await getServerSession(authOptions);
+
+    const jwt = session?.accessToken;
+
     return (
         <>
             <header className="px-4 lg:px-6 h-14 flex items-center">
@@ -19,12 +25,24 @@ export const Header = () => {
                     </div>
 
                     <div className="flex gap-4 sm:gap-6 ml-10">
-                        <Link href="/signin" className="text-sm font-medium hover:underline underline-offset-4">
-                            로그인
-                        </Link>
-                        <Link href="/signup" className="text-sm font-medium hover:underline underline-offset-4">
-                            회원가입
-                        </Link>
+                        {jwt ? (
+                            <Link href="" className="text-sm font-medium hover:underline underline-offset-4">
+                                로그아웃
+                            </Link>
+                        ) : (
+                            <Link href="/signin" className="text-sm font-medium hover:underline underline-offset-4">
+                                로그인
+                            </Link>
+                        )}
+                        {jwt ? (
+                            <Link href="/mypage" className="text-sm font-medium hover:underline underline-offset-4">
+                                마이페이지
+                            </Link>
+                        ) : (
+                            <Link href="/signup" className="text-sm font-medium hover:underline underline-offset-4">
+                                회원가입
+                            </Link>
+                        )}
                     </div>
                 </nav>
             </header>
