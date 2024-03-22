@@ -1,5 +1,6 @@
 {
   "devDependencies": {
+    "@tanstack/eslint-plugin-query": "^5.28.6",
     "turbo": "^1.12.4"
   },
   "scripts": {
@@ -7,5 +8,9 @@
   },
   "workspaces": [
     "apps/*"
-  ]
+  ],
+  "dependencies": {
+    "@tanstack/react-query": "^5.28.6",
+    "@tanstack/react-query-devtools": "^5.28.6"
+  }
 }
