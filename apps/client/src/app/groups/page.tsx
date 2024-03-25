@@ -10,28 +10,18 @@ import {
 import { Payment, columns } from "./columns";
 import { DataTable } from "./data-table";
 import { Card, CardContainer, CardContent } from "@/components/ui/card";
-import { Session, getServerSession } from "next-auth";
-import { authOptions } from "../../../pages/api/auth/[...nextauth]";
-import { getData } from "./data";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { getGroupsAPI } from "../../../apis";
 
 export default async function GroupsPage() {
-    // const session: Session | null = await getServerSession(authOptions);
+    let data: Payment[] = [];
 
-    // const jwt = session?.accessToken;
+    const result = await getGroupsAPI();
 
-    // const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/groups`, {
-    //     method: "GET",
-    //     headers: {
-    //         "Content-Type": "application/json",
-    //         Authorization: `Bearer ${jwt}`,
-    //     },
-    // });
-
-    // const data = await response.json();
-
-    const data = await getData();
+    if (result.status === "success") {
+        data = result.data;
+    }
 
     return (
         <>

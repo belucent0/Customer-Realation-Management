@@ -6,31 +6,33 @@ import { ColumnDef } from "@tanstack/react-table";
 // You can use a Zod schema here if you want.
 export type Payment = {
     id: string;
-    amount: number;
-    status: "pending" | "processing" | "success" | "failed";
-    email: string;
+    groupName: string;
+    createdAt: string;
+    // amount: number;
+    // status: "pending" | "processing" | "success" | "failed";
+    // email: string;
 };
 
 export const columns: ColumnDef<Payment>[] = [
     {
-        accessorKey: "status",
-        header: "Status",
+        accessorKey: "id",
+        header: "번호",
     },
     {
-        accessorKey: "email",
-        header: "Email",
+        accessorKey: "groupName",
+        header: "그룹명",
     },
     {
-        accessorKey: "amount",
-        header: () => <div className="text-right">Amount</div>,
+        accessorKey: "createdAt",
+        header: () => <div className="text-right">생성일시</div>,
         cell: ({ row }) => {
-            const amount = parseFloat(row.getValue("amount"));
-            const formatted = new Intl.NumberFormat("en-US", {
-                style: "currency",
-                currency: "USD",
-            }).format(amount);
+            const date = new Date(row.getValue("createdAt"));
+            const formatted = new Intl.DateTimeFormat("ko-KR", {
+                dateStyle: "medium",
+                timeStyle: "short",
+            }).format(date);
 
-            return <div className="text-right font-medium">{formatted}</div>;
+            return <div className="text-right">{formatted}</div>;
         },
     },
 ];
