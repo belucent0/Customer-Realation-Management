@@ -14,9 +14,9 @@ export class GroupsService {
         try {
             const isExistOwner = await this.groupsRepository.findGroupsYourOwned(userId);
 
-            if (isExistOwner.length > 1) {
-                throw new BadRequestException("현재 플랜에서 2개 이상의 그룹을 생성할 수 없습니다.");
-            }
+            // if (isExistOwner.length > 1) {
+            //     throw new BadRequestException("현재 플랜에서 2개 이상의 그룹을 생성할 수 없습니다.");
+            // }
 
             const isExist = await this.groupsRepository.findDuplicateGroupNames(createGroupDto.groupName);
 
