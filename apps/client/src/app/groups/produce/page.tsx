@@ -20,9 +20,9 @@ export default function signupPage() {
             const result = await createGroupAPI(groupName);
 
             if (result.status === "success") {
-                console.log(result.data);
                 alert(result.message);
                 router.push("/groups");
+                router.refresh();
             }
 
             if (result.statusCode === 400) {
