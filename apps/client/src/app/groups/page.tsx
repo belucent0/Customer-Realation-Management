@@ -25,8 +25,8 @@ export default async function GroupsPage() {
 
     return (
         <>
-            <div className="container mx-auto py-10">
-                <Card>
+            <div className="container mx-auto py-6">
+                <Card className="min-w-[500px] w-full h-full min-h-[800px] sm:h-[1050px]">
                     <CardContainer>
                         <CardContent>
                             <div className="flex justify-between items-center">

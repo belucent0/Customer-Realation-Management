@@ -9,84 +9,90 @@ import { Button } from "@/components/ui/button";
 export default function Home() {
     return (
         <>
-            <main className="flex-1">
-                <section className="w-full py-12 md:py-24 lg:py-32">
-                    <div className="container px-4 md:px-6">
-                        <div className="grid max-w-[1300px] mx-auto items-center gap-4 px-4 sm:px-6 md:px-10 md:grid-cols-2 md:gap-16">
-                            <div className="space-y-2">
-                                <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">Your CRM, your way</h1>
-                                <p className="text-gray-500 dark:text-gray-400">
-                                    Let your team focus on the customer, not the tool. Our CRM platform is designed to be easy to use, customizable,
-                                    and packed with features.
-                                </p>
+            <div className="flex min-h-screen w-full flex-col">
+                <main className="flex-1">
+                    <section className="w-full py-12 md:py-24 lg:py-32">
+                        <div className="container px-4 md:px-6">
+                            <div className="grid max-w-[1300px] mx-auto items-center gap-4 px-4 sm:px-6 md:px-10 md:grid-cols-2 md:gap-16">
+                                <div className="space-y-2">
+                                    <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">Your CRM, your way</h1>
+                                    <p className="text-gray-500 dark:text-gray-400">
+                                        Let your team focus on the customer, not the tool. Our CRM platform is designed to be easy to use,
+                                        customizable, and packed with features.
+                                    </p>
+                                </div>
+                                <div className="mx-auto flex items-center justify-center">
+                                    <img
+                                        alt="Hero"
+                                        className="aspect-video overflow-hidden rounded-xl object-cover object-center"
+                                        height="250"
+                                        src="/placeholder.svg"
+                                        width="500"
+                                    />
+                                </div>
                             </div>
-                            <div className="mx-auto flex items-center justify-center">
+                        </div>
+                    </section>
+                    <section className="w-full py-12 md:py-24 lg:py-32 border-t">
+                        <div className="container px-4 md:px-6">
+                            <div className="grid max-w-5xl mx-auto items-center gap-6 md:gap-12">
+                                <div className="grid gap-4">
+                                    <div className="grid gap-1">
+                                        <h3 className="text-xl font-bold">Customizable</h3>
+                                        <p className="text-gray-500 dark:text-gray-400">
+                                            Make the CRM work the way you do with customizable workflows.
+                                        </p>
+                                    </div>
+                                    <div className="grid gap-1">
+                                        <h3 className="text-xl font-bold">Insights</h3>
+                                        <p className="text-gray-500 dark:text-gray-400">
+                                            Get real-time insights into your customer interactions with built-in analytics.
+                                        </p>
+                                    </div>
+                                    <div className="grid gap-1">
+                                        <h3 className="text-xl font-bold">Collaboration</h3>
+                                        <p className="text-gray-500 dark:text-gray-400">
+                                            Make collaboration seamless with built-in code review tools.
+                                        </p>
+                                    </div>
+                                </div>
                                 <img
-                                    alt="Hero"
-                                    className="aspect-video overflow-hidden rounded-xl object-cover object-center"
-                                    height="250"
+                                    alt="Image"
+                                    className="mx-auto aspect-video overflow-hidden rounded-xl object-cover object-center"
+                                    height="400"
                                     src="/placeholder.svg"
-                                    width="500"
+                                    width="700"
                                 />
                             </div>
                         </div>
-                    </div>
-                </section>
-                <section className="w-full py-12 md:py-24 lg:py-32 border-t">
-                    <div className="container px-4 md:px-6">
-                        <div className="grid max-w-5xl mx-auto items-center gap-6 md:gap-12">
-                            <div className="grid gap-4">
-                                <div className="grid gap-1">
-                                    <h3 className="text-xl font-bold">Customizable</h3>
-                                    <p className="text-gray-500 dark:text-gray-400">Make the CRM work the way you do with customizable workflows.</p>
-                                </div>
-                                <div className="grid gap-1">
-                                    <h3 className="text-xl font-bold">Insights</h3>
-                                    <p className="text-gray-500 dark:text-gray-400">
-                                        Get real-time insights into your customer interactions with built-in analytics.
-                                    </p>
-                                </div>
-                                <div className="grid gap-1">
-                                    <h3 className="text-xl font-bold">Collaboration</h3>
-                                    <p className="text-gray-500 dark:text-gray-400">Make collaboration seamless with built-in code review tools.</p>
-                                </div>
+                    </section>
+                    <section className="w-full py-12 md:py-24 lg:py-32 border-t">
+                        <div className="container grid items-center gap-6 px-4 text-center md:px-6">
+                            <div className="space-y-3">
+                                <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">
+                                    편리한 그룹 관리 기능을 즉시 사용할 수 있습니다.
+                                </h2>
+                                <p className="mx-auto max-w-[600px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
+                                    여러분의 서비스에 맞게 커스터마이징된 그룹 관리 기능을 경험해보세요. 고객관리를 위한 대시보드와 알림 기능을
+                                    제공합니다.
+                                </p>
                             </div>
-                            <img
-                                alt="Image"
-                                className="mx-auto aspect-video overflow-hidden rounded-xl object-cover object-center"
-                                height="400"
-                                src="/placeholder.svg"
-                                width="700"
-                            />
+                            <div className="mx-auto w-full max-w-sm space-y-2">
+                                <form className="flex space-x-2">
+                                    <Input className="max-w-lg flex-1" placeholder="Enter your email" type="email" />
+                                    <Button type="submit">Sign Up</Button>
+                                </form>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    Sign up to get notified when we launch.
+                                    <Link className="underline underline-offset-2" href="#">
+                                        Terms & Conditions
+                                    </Link>
+                                </p>
+                            </div>
                         </div>
-                    </div>
-                </section>
-                <section className="w-full py-12 md:py-24 lg:py-32 border-t">
-                    <div className="container grid items-center gap-6 px-4 text-center md:px-6">
-                        <div className="space-y-3">
-                            <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">
-                                편리한 그룹 관리 기능을 즉시 사용할 수 있습니다.
-                            </h2>
-                            <p className="mx-auto max-w-[600px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
-                                여러분의 서비스에 맞게 커스터마이징된 그룹 관리 기능을 경험해보세요. 고객관리를 위한 대시보드와 알림 기능을
-                                제공합니다.
-                            </p>
-                        </div>
-                        <div className="mx-auto w-full max-w-sm space-y-2">
-                            <form className="flex space-x-2">
-                                <Input className="max-w-lg flex-1" placeholder="Enter your email" type="email" />
-                                <Button type="submit">Sign Up</Button>
-                            </form>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                                Sign up to get notified when we launch.
-                                <Link className="underline underline-offset-2" href="#">
-                                    Terms & Conditions
-                                </Link>
-                            </p>
-                        </div>
-                    </div>
-                </section>
-            </main>
+                    </section>
+                </main>
+            </div>
         </>
     );
 }

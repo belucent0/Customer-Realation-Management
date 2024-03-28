@@ -3,6 +3,7 @@
 import { Session } from "next-auth";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
+import { Cat } from "lucide-react";
 
 type props = {
     session: Session | null;
@@ -13,18 +14,15 @@ export const Header = ({ session }: props) => {
 
     return (
         <>
-            <header className="px-4 lg:px-6 h-14 flex items-center">
-                <Link className="flex items-center justify-center" href="/">
-                    <MountainIcon className="h-6 w-6" />
-                    <span className="sr-only">Acme Inc</span>
-                </Link>
-                <nav className="flex justify-between w-full px-2 sm:gap-6">
-                    <div className="flex gap-4 px-10 sm:gap-6">
-                        <a href="/groups" className="text-sm font-medium hover:underline underline-offset-4">
+            <header className="sticky top-0 z-50 w-full flex h-14 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 md:px-6">
+                <nav className="flex flex-row items-center justify-between text-sm md:text-base font-medium  w-full px-2 sm:gap-6">
+                    <div className="flex items-center gap-4 sm:gap-6">
+                        <Link href="/" className="flex items-center gap-2 mr-10 text-lg font-semibold md:text-base">
+                            <Cat className="h-6 w-6" />
+                            <span className="sr-only">Acme Inc</span>
+                        </Link>
+                        <Link href="/groups" className="text-foreground transition-colors hover:text-foreground">
                             그룹
-                        </a>
-                        <Link href="/groups" className="text-sm font-medium hover:underline underline-offset-4">
-                            Pricing
                         </Link>
                     </div>
 
@@ -34,21 +32,21 @@ export const Header = ({ session }: props) => {
                                 onClick={() => {
                                     signOut();
                                 }}
-                                className="text-sm font-medium hover:underline underline-offset-4"
+                                className="text-foreground transition-colors hover:text-foreground"
                             >
                                 로그아웃
                             </button>
                         ) : (
-                            <a href="/signin" className="text-sm font-medium hover:underline underline-offset-4">
+                            <a href="/signin" className="text-foreground transition-colors hover:text-foreground">
                                 로그인
                             </a>
                         )}
                         {jwt ? (
-                            <Link href="/mypage" className="text-sm font-medium hover:underline underline-offset-4">
+                            <Link href="/mypage" className="text-foreground transition-colors hover:text-foreground">
                                 마이페이지
                             </Link>
                         ) : (
-                            <Link href="/signup" className="text-sm font-medium hover:underline underline-offset-4">
+                            <Link href="/signup" className="text-foreground transition-colors hover:text-foreground">
                                 회원가입
                             </Link>
                         )}
@@ -58,22 +56,3 @@ export const Header = ({ session }: props) => {
         </>
     );
 };
-
-function MountainIcon(props: React.SVGProps<SVGSVGElement>) {
-    return (
-        <svg
-            {...props}
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        >
-            <path d="m8 3 4 8 5-5 5 15H2L8 3z" />
-        </svg>
-    );
-}
