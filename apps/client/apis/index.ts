@@ -25,7 +25,7 @@ export const getGroupsAPI = async () => {
     return await response.json();
 };
 
-export const createGroupAPI = async (groupName: string) => {
+export const createGroupAPI = async (groupName: string, groupEngName: string) => {
     const jwt = await getSession();
 
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/groups`, {
@@ -34,7 +34,7 @@ export const createGroupAPI = async (groupName: string) => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${jwt}`,
         },
-        body: JSON.stringify({ groupName }),
+        body: JSON.stringify({ groupName, groupEngName }),
     });
 
     return await response.json();

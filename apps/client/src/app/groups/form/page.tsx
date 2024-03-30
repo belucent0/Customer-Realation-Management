@@ -8,8 +8,10 @@ import { SyntheticEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createGroupAPI } from "../../../../apis";
-export default function signupPage() {
+
+export default function GroupFormPage() {
     const [groupName, setGroupName] = useState("");
+    const [groupEngName, setGroupEngName] = useState("");
 
     const router = useRouter();
 
@@ -17,7 +19,7 @@ export default function signupPage() {
         event.preventDefault();
 
         try {
-            const result = await createGroupAPI(groupName);
+            const result = await createGroupAPI(groupName, groupEngName);
 
             if (result.status === "success") {
                 alert(result.message);
@@ -34,7 +36,7 @@ export default function signupPage() {
             }
         } catch (error: any | Error) {
             console.error(error);
-            alert(error.message);
+            alert("서버 요청에 실패했습니다. 다시 시도해주세요.");
         }
     };
 
@@ -60,9 +62,21 @@ export default function signupPage() {
                                         value={groupName}
                                         onChange={e => setGroupName(e.target.value.trim())}
                                     />
+
                                     {/* <div className="flex justify-end">
                                         <Button type="submit">중복 확인</Button>
                                     </div> */}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="groupEngName">그룹 영문명</Label>
+                                    <Input
+                                        id="groupEngName"
+                                        placeholder="생성할 그룹 영문명을 입력해주세요."
+                                        required
+                                        type="text"
+                                        value={groupEngName}
+                                        onChange={e => setGroupEngName(e.target.value.trim())}
+                                    />
                                 </div>
                             </div>
                         </CardContent>

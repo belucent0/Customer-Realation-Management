@@ -31,8 +31,8 @@ export default async function GroupsPage() {
                         <CardContent>
                             <div className="flex justify-between items-center">
                                 <h1 className="text-2xl font-semibold">그룹 목록</h1>
-                                <Link href="/groups/produce">
-                                    <Button>새 그룹 생성하기</Button>
+                                <Link href="/groups/form">
+                                    <Button>새 그룹 생성</Button>
                                 </Link>
                             </div>
                         </CardContent>
