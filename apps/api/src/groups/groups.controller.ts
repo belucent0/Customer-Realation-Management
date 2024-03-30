@@ -53,8 +53,8 @@ export class GroupsController {
     @UseGuards(AuthGuard())
     @HttpCode(HttpStatus.OK)
     @ResMessage("사용 가능한 그룹명입니다.")
-    async checkGroupName(@Body("groupName") groupName: string) {
-        return this.groupsService.checkGroupName(groupName);
+    async checkGroupName(@Body("groupName") groupName: string, @Body("groupEngName") groupEngName: string) {
+        return this.groupsService.checkGroupName(groupName, groupEngName);
     }
 
     //그룹 상세 조회

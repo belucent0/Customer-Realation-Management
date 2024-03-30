@@ -12,19 +12,22 @@ export class GroupsService {
     //그룹 생성
     async createGroup(userId: number, createGroupDto: CreateGroupDto) {
         try {
-            const isExistOwner = await this.groupsRepository.findGroupsYourOwned(userId);
+            await this.groupsRepository.findGroupsYourOwned(userId);
 
             // if (isExistOwner.length > 1) {
             //     throw new BadRequestException("현재 플랜에서 2개 이상의 그룹을 생성할 수 없습니다.");
             // }
 
-            const isExist = await this.groupsRepository.findDuplicateGroupNames(createGroupDto.groupName);
+            const isExist = await this.groupsRepository.findDuplicateGroupNames(createGroupDto.groupName, createGroupDto.groupEngName);
 
-            if (isExist) {
-                throw new BadRequestException("동일한 그룹명이 존재합니다.");
+            if (isExist?.groupName) {
+                throw new BadRequestException("이미 사용중인 그룹명입니다.");
             }
 
-            return await this.groupsRepository.createGroup(userId, createGroupDto.groupName);
+            if (isExist?.groupEngName) {
+                throw new BadRequestException("이미 사용중인 영문명입니다.");
+            }
+            return await this.groupsRepository.createGroup(userId, createGroupDto.groupName, createGroupDto.groupEngName);
         } catch (error) {
             console.error(error);
             if (error instanceof BadRequestException) {
@@ -35,9 +38,9 @@ export class GroupsService {
     }
 
     //그룹명 중복 확인
-    async checkGroupName(groupName: string): Promise<void> {
+    async checkGroupName(groupName: string, groupEngName: string): Promise<void> {
         try {
-            const isDuplicatedName = await this.groupsRepository.findDuplicateGroupNames(groupName);
+            const isDuplicatedName = await this.groupsRepository.findDuplicateGroupNames(groupName, groupEngName);
 
             if (isDuplicatedName) {
                 throw new BadRequestException("동일한 그룹명이 존재합니다.");

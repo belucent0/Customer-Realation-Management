@@ -32,21 +32,23 @@ export class GroupsRepository {
     }
 
     // 그룹 이름 중복 확인
-    async findDuplicateGroupNames(groupName: string) {
+    async findDuplicateGroupNames(groupName: string, groupEngName: string) {
         return await this.prisma.group.findFirst({
             where: {
-                groupName,
+                OR: [{ groupName }, { groupEngName }],
             },
         });
     }
 
     // 그룹 생성 - 트랜잭션
-    async createGroup(userId: number, groupName: string) {
+    async createGroup(userId: number, groupName: string, groupEngName: string) {
+        console.log(userId, groupName, groupEngName);
         // 트랜잭션: 그룹 생성 -> 멤버 생성
         const newGroup = await this.prisma.$transaction(async prisma => {
             const group = await prisma.group.create({
                 data: {
                     groupName,
+                    groupEngName,
                 },
             });
 
@@ -85,6 +87,7 @@ export class GroupsRepository {
             select: {
                 id: true,
                 groupName: true,
+                groupEngName: true,
                 createdAt: true,
             },
         });
