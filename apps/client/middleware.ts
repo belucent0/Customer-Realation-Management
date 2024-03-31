@@ -8,26 +8,28 @@ export function middleware(request: NextRequest) {
     // 세션 있을 때
     if (session) {
         if (request.nextUrl.pathname.startsWith("/signin")) {
-            return NextResponse.redirect(new URL("/", request.url));
+            return NextResponse.redirect(new URL("/groups", request.url));
         }
 
         if (request.nextUrl.pathname.startsWith("/signup")) {
-            return NextResponse.redirect(new URL("/", request.url));
+            return NextResponse.redirect(new URL("/groups", request.url));
         }
 
         return NextResponse.next();
     }
 
     // 세션 없을 때
-    if (request.nextUrl.pathname.startsWith("/signin")) {
-        return NextResponse.next();
-    }
+    if (!session) {
+        if (request.nextUrl.pathname.startsWith("/signin")) {
+            return NextResponse.next();
+        }
 
-    if (request.nextUrl.pathname.startsWith("/signup")) {
-        return NextResponse.next();
-    }
+        if (request.nextUrl.pathname.startsWith("/signup")) {
+            return NextResponse.next();
+        }
 
-    return NextResponse.redirect(new URL("/signin", request.url));
+        return NextResponse.redirect(new URL("/signin", request.url));
+    }
 }
 
 // See "Matching Paths" below to learn more

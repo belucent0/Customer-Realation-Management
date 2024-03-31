@@ -1,12 +1,14 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import Link from "next/link";
 
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
 export type Payment = {
     id: string;
     groupName: string;
+    groupEngName: string;
     createdAt: string;
     // amount: number;
     // status: "pending" | "processing" | "success" | "failed";
@@ -20,7 +22,14 @@ export const columns: ColumnDef<Payment>[] = [
     },
     {
         accessorKey: "groupName",
-        header: "그룹명",
+        header: () => <div className="">그룹명</div>,
+        cell: ({ row }) => {
+            return (
+                <div>
+                    <Link href={`/groups/${row.original.groupEngName}/member`}>{row.getValue("groupName")}</Link>
+                </div>
+            );
+        },
     },
     {
         accessorKey: "createdAt",
